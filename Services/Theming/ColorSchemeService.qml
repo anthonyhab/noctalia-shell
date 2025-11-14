@@ -5,6 +5,7 @@ import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Services
 import qs.Services.UI
 
 Singleton {
@@ -14,24 +15,44 @@ Singleton {
   property bool scanning: false
   property string schemesDirectory: Quickshell.shellDir + "/Assets/ColorScheme"
   property string colorsJsonFilePath: Settings.configDir + "colors.json"
+  property bool suppressDarkModeNotification: false
 
   Connections {
     target: Settings.data.colorSchemes
     function onDarkModeChanged() {
+      if (Settings.data.omarchy.active) {
+        Logger.i("ColorScheme", "Ignoring dark mode change because Omarchy is active")
+        return
+      }
       Logger.i("ColorScheme", "Detected dark mode change")
       if (!Settings.data.colorSchemes.useWallpaperColors && Settings.data.colorSchemes.predefinedScheme) {
         // Re-apply current scheme to pick the right variant
         applyScheme(Settings.data.colorSchemes.predefinedScheme)
       }
-      // Toast: dark/light mode switched
-      const enabled = !!Settings.data.colorSchemes.darkMode
-      const label = enabled ? "Dark mode" : "Light mode"
-      const description = enabled ? "Enabled" : "Enabled"
-      ToastService.showNotice(label, description, "dark-mode")
+      // Toast: dark/light mode switched (unless suppressed by programmatic change)
+      if (!suppressDarkModeNotification) {
+        const enabled = !!Settings.data.colorSchemes.darkMode
+        const label = enabled ? "Dark mode" : "Light mode"
+        const description = enabled ? "Enabled" : "Enabled"
+        ToastService.showNotice(label, description, "dark-mode")
+      } else {
+        Logger.d("ColorScheme", "Dark mode notification suppressed (programmatic change)")
+      }
     }
   }
 
   // --------------------------------
+  // Listen for Omarchy scheme ready signal
+  Connections {
+    target: OmarchyService
+    function onSchemeReady() {
+      Logger.d("ColorScheme", "Omarchy scheme is ready, loading...")
+      var filePath = OmarchyService.outputJsonPath
+      schemeReader.path = ""
+      schemeReader.path = filePath
+    }
+  }
+
   function init() {
     // does nothing but ensure the singleton is created
     // do not remove
@@ -141,9 +162,15 @@ Singleton {
           if (basename !== stored) {
             Settings.data.colorSchemes.predefinedScheme = basename
           }
-          if (!Settings.data.colorSchemes.useWallpaperColors) {
+          // Only auto-apply if not using wallpaper colors AND Omarchy is not active
+          if (!Settings.data.colorSchemes.useWallpaperColors && !Settings.data.omarchy.active) {
             applyScheme(basename)
           }
+        }
+        // If Omarchy is active, reload it on startup
+        if (Settings.data.omarchy.active && OmarchyService.isAvailable()) {
+          Logger.i("ColorScheme", "Restoring Omarchy theme on startup")
+          OmarchyService.reload()
         }
       } else {
         Logger.e("ColorScheme", "Failed to find color scheme files")
@@ -160,9 +187,18 @@ Singleton {
   FileView {
     id: schemeReader
     onLoaded: {
+      if (!path) {
+        return
+      }
       try {
-        var data = JSON.parse(text())
-        var variant = data
+        var rawText = text()
+        if (rawText === undefined || rawText === "") {
+          Logger.e("ColorScheme", "Failed to read scheme JSON (empty file):", path)
+          return
+        }
+        var data = JSON.parse(rawText)
+        var variant = null
+
         // If scheme provides dark/light variants, pick based on settings
         if (data && (data.dark || data.light)) {
           if (Settings.data.colorSchemes.darkMode) {
@@ -170,13 +206,26 @@ Singleton {
           } else {
             variant = data.light || data.dark
           }
+        } else if (data && data.mPrimary) {
+          // Flat scheme format (single variant) - like Omarchy dynamic schemes
+          variant = data
         }
+
+        if (!variant || !variant.mPrimary) {
+          Logger.e("ColorScheme", "Invalid scheme format - missing required colors in:", path)
+          return
+        }
+
         writeColorsToDisk(variant)
         Logger.i("ColorScheme", "Applying color scheme:", getBasename(path))
 
         // Generate Matugen templates if any are enabled and setting allows it
         if (Settings.data.colorSchemes.generateTemplatesForPredefined && hasEnabledTemplates()) {
-          AppThemeService.generateFromPredefinedScheme(data)
+          var normalizedData = data && (data.dark || data.light) ? data : ({
+                                                                             "dark": variant,
+                                                                             "light": variant
+                                                                           })
+          AppThemeService.generateFromPredefinedScheme(normalizedData, Settings.data.omarchy.active)
         }
       } catch (e) {
         Logger.e("ColorScheme", "Failed to parse scheme JSON:", path, e)

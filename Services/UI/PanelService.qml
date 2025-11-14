@@ -13,6 +13,7 @@ Singleton {
   // Panels
   property var registeredPanels: ({})
   property var openedPanel: null
+  property var panelPopupStacks: []
   signal willOpen
   signal didClose
 
@@ -87,8 +88,83 @@ Singleton {
     if (openedPanel && openedPanel === panel) {
       openedPanel = null
     }
+    clearPanelPopups(panel)
 
     // emit signal
     didClose()
+  }
+
+  function popupStackIndex(panel) {
+    if (!panelPopupStacks || !panel)
+      return -1
+    for (var i = 0; i < panelPopupStacks.length; ++i) {
+      if (panelPopupStacks[i].panel === panel)
+        return i
+    }
+    return -1
+  }
+
+  function registerPanelPopup(popup, panel) {
+    if (!popup)
+      return
+    panel = panel || openedPanel
+    if (!panel)
+      return
+    var idx = popupStackIndex(panel)
+    if (idx === -1) {
+      panelPopupStacks.push({
+                              "panel": panel,
+                              "popups": []
+                            })
+      idx = panelPopupStacks.length - 1
+    }
+    var stack = panelPopupStacks[idx].popups
+    if (stack.indexOf(popup) === -1)
+      stack.push(popup)
+  }
+
+  function unregisterPanelPopup(popup, panel) {
+    if (!popup)
+      return
+    panel = panel || openedPanel
+    if (!panel)
+      return
+    var idx = popupStackIndex(panel)
+    if (idx === -1)
+      return
+    var stack = panelPopupStacks[idx].popups
+    var popupIdx = stack.indexOf(popup)
+    if (popupIdx !== -1)
+      stack.splice(popupIdx, 1)
+    if (stack.length === 0)
+      panelPopupStacks.splice(idx, 1)
+  }
+
+  function closeTopPopup(panel) {
+    panel = panel || openedPanel
+    if (!panel)
+      return false
+    var idx = popupStackIndex(panel)
+    if (idx === -1)
+      return false
+    var stack = panelPopupStacks[idx].popups
+    while (stack.length > 0) {
+      var popup = stack.pop()
+      if (popup && popup.visible && typeof popup.close === "function") {
+        popup.close()
+        if (stack.length === 0)
+          panelPopupStacks.splice(idx, 1)
+        return true
+      }
+    }
+    panelPopupStacks.splice(idx, 1)
+    return false
+  }
+
+  function clearPanelPopups(panel) {
+    panel = panel || openedPanel
+    var idx = popupStackIndex(panel)
+    if (idx !== -1)
+      panelPopupStacks.splice(idx, 1)
   }
 }

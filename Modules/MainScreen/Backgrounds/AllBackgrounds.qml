@@ -151,6 +151,13 @@ Item {
         backgroundColor: panelBackgroundColor
       }
 
+      // Omarchy Theme
+      PanelBackground {
+        panel: root.windowRoot.omarchyThemePanelPlaceholder
+        shapeContainer: backgroundsShape
+        backgroundColor: panelBackgroundColor
+      }
+
       // WiFi
       PanelBackground {
         panel: root.windowRoot.wifiPanelPlaceholder

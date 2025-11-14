@@ -352,6 +352,12 @@
           "description": "Choisir comment les étiquettes d'espace de travail sont affichées.",
           "label": "Mode d'étiquette"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Choisissez comment le nom du thème est affiché.",
+          "label": "Mode d'affichage"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "Générer des schémas de couleurs à partir de votre fond d'écran avec Matugen. Extrait automatiquement les couleurs pour créer un thème cohérent.",
           "label": "Utiliser les couleurs du fond d'écran"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Synchroniser les couleurs du système de thèmes Omarchy.",
+          "label": "Utiliser la synchronisation de thème Omarchy"
+        },
+        "active": {
+          "current": "Thème actuel : {theme}",
+          "description": "Obtenez plus de thèmes sur {url}",
+          "disable": "Désactiver l'intégration Omarchy",
+          "selector": {
+            "label": "Thème actuel"
+          },
+          "syncing": "Synchronisation des couleurs du thème",
+          "title": "Thème Omarchy actif"
+        },
+        "panel": {
+          "title": "Thèmes Omarchy"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "Ouvrir les paramètres",
     "open-tray-dropdown": "Ouvrir le menu déroulant de la barre d'état",
     "open-wallpaper-selector": "Ouvrir le sélecteur de fond d'écran",
+    "omarchy-not-available": "Intégration Omarchy indisponible",
+    "omarchy-theme": "Thème actuel : {theme}\nClic gauche : ouvrir le sélecteur.\nClic droit : changer de thème.\nClic molette : thème aléatoire.",
     "output-muted": "Couper la sortie audio",
     "pause": "Pause",
     "play": "Lecture",

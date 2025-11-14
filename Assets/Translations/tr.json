@@ -352,6 +352,12 @@
           "description": "Çalışma alanı etiketlerinin nasıl gösterileceğini seçin.",
           "label": "Etiket Modu"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Tema adının nasıl görüntüleneceğini seçin.",
+          "label": "Görüntüleme modu"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "Matugen kullanarak duvar kağıdınızdan renk şemaları oluşturun. Bütünleşik bir tema oluşturmak için renkleri otomatik olarak çıkarır.",
           "label": "Duvar kağıdı renklerini kullan"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Omarchy tema sisteminden renkleri senkronize edin.",
+          "label": "Omarchy tema senkronizasyonunu kullan"
+        },
+        "active": {
+          "current": "Geçerli tema: {theme}",
+          "description": "Daha fazla temayı {url} adresinde bulun",
+          "disable": "Omarchy entegrasyonunu devre dışı bırak",
+          "selector": {
+            "label": "Geçerli tema"
+          },
+          "syncing": "Tema renkleri senkronize ediliyor",
+          "title": "Omarchy teması aktif"
+        },
+        "panel": {
+          "title": "Omarchy temaları"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "Ayarları aç",
     "open-tray-dropdown": "Tepsi açılır menüsünü aç",
     "open-wallpaper-selector": "Duvar kağıdı seçiciyi aç",
+    "omarchy-not-available": "Omarchy entegrasyonu kullanılamıyor",
+    "omarchy-theme": "Geçerli tema: {theme}\nSol tık: tema seçiciyi aç.\nSağ tık: temalar arasında geç.\nOrta tık: rastgele tema.",
     "output-muted": "Çıkış sessizliğini değiştir",
     "pause": "Duraklat",
     "play": "Oynat",

@@ -352,6 +352,12 @@
           "description": "Choose how workspace labels are displayed.",
           "label": "Label Mode"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Choose how theme name is displayed.",
+          "label": "Display mode"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "Generate color schemes from your wallpaper using Matugen. Automatically extracts colors to create a cohesive theme.",
           "label": "Use wallpaper colors"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Sync colors from the Omarchy theming system.",
+          "label": "Use Omarchy theme sync"
+        },
+        "active": {
+          "current": "Current theme: {theme}",
+          "description": "Get more themes at {url}",
+          "disable": "Disable Omarchy integration",
+          "selector": {
+            "label": "Current theme"
+          },
+          "syncing": "Synchronizing theme colors",
+          "title": "Omarchy theme active"
+        },
+        "panel": {
+          "title": "Omarchy themes"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "Open settings",
     "open-tray-dropdown": "Open tray dropdown",
     "open-wallpaper-selector": "Open wallpaper selector",
+    "omarchy-not-available": "Omarchy integration not available",
+    "omarchy-theme": "Current theme: {theme}\nLeft click: open theme selector.\nRight click: cycle themes.\nMiddle click: random theme.",
     "output-muted": "Toggle output mute",
     "pause": "Pause",
     "play": "Play",

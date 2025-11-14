@@ -260,9 +260,10 @@ SmartPanel {
   function onEscapePressed() {
     if (timerActive) {
       cancelTimer()
-    } else {
-      root.close()
+      return true
     }
+    root.close()
+    return true
   }
 
   function onTabPressed() {

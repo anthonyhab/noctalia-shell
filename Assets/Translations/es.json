@@ -352,6 +352,12 @@
           "description": "Elegir cómo se muestran las etiquetas de los espacios de trabajo.",
           "label": "Modo de etiqueta"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Elige cómo se muestra el nombre del tema.",
+          "label": "Modo de visualización"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "Generar esquemas de color desde tu fondo de pantalla usando Matugen. Extrae automáticamente colores para crear un tema cohesivo.",
           "label": "Usar colores del fondo de pantalla"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Sincronizar colores del sistema de temas Omarchy.",
+          "label": "Usar sincronización de temas Omarchy"
+        },
+        "active": {
+          "current": "Tema actual: {theme}",
+          "description": "Obtén más temas en {url}",
+          "disable": "Desactivar integración Omarchy",
+          "selector": {
+            "label": "Tema actual"
+          },
+          "syncing": "Sincronizando colores del tema",
+          "title": "Tema Omarchy activo"
+        },
+        "panel": {
+          "title": "Temas de Omarchy"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "Abrir configuración",
     "open-tray-dropdown": "Abrir menú desplegable de bandeja",
     "open-wallpaper-selector": "Abrir selector de fondos de pantalla",
+    "omarchy-not-available": "Integración de Omarchy no disponible",
+    "omarchy-theme": "Tema actual: {theme}\nClic izquierdo: abrir selector.\nClic derecho: cambiar tema.\nClic central: tema aleatorio.",
     "output-muted": "Silenciar salida de audio",
     "pause": "Pausa",
     "play": "Reproducir",

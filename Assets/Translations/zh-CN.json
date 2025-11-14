@@ -352,6 +352,12 @@
           "description": "选择工作区标签的显示方式。",
           "label": "标签模式"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "选择主题名称的显示方式。",
+          "label": "显示模式"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "使用 Matugen 从壁纸生成颜色方案。自动提取颜色以创建一致的主题。",
           "label": "使用壁纸颜色"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "从 Omarchy 主题系统同步颜色。",
+          "label": "使用 Omarchy 主题同步"
+        },
+        "active": {
+          "current": "当前主题：{theme}",
+          "description": "在 {url} 获取更多主题",
+          "disable": "禁用 Omarchy 集成",
+          "selector": {
+            "label": "当前主题"
+          },
+          "syncing": "正在同步主题颜色",
+          "title": "Omarchy 主题已激活"
+        },
+        "panel": {
+          "title": "Omarchy 主题"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "打开设置",
     "open-tray-dropdown": "打开系统托盘下拉菜单",
     "open-wallpaper-selector": "打开壁纸选择器",
+    "omarchy-not-available": "Omarchy 集成不可用",
+    "omarchy-theme": "当前主题：{theme}\n左键：打开主题选择器。\n右键：切换主题。\n中键：随机主题。",
     "output-muted": "静音输出设备",
     "pause": "暂停",
     "play": "播放",

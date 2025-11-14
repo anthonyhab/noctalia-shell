@@ -352,6 +352,12 @@
           "description": "Kies hoe labels van werkruimten worden weergegeven.",
           "label": "Labelmodus"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Kies hoe de themanaam wordt weergegeven.",
+          "label": "Weergavemodus"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "Genereer kleurenschema's uit je achtergrond met Matugen. Kleuren worden automatisch geëxtraheerd om een samenhangend thema te maken.",
           "label": "Achtergrondkleuren gebruiken"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Synchroniseer kleuren vanuit het Omarchy-themasysteem.",
+          "label": "Gebruik Omarchy-themasynchronisatie"
+        },
+        "active": {
+          "current": "Huidig thema: {theme}",
+          "description": "Vind meer thema's op {url}",
+          "disable": "Omarchy-integratie uitschakelen",
+          "selector": {
+            "label": "Huidig thema"
+          },
+          "syncing": "Themakleuren synchroniseren",
+          "title": "Omarchy-thema actief"
+        },
+        "panel": {
+          "title": "Omarchy-thema's"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "Instellingen openen",
     "open-tray-dropdown": "Systeemvakmenu openen",
     "open-wallpaper-selector": "Achtergrondkiezer openen",
+    "omarchy-not-available": "Omarchy-integratie niet beschikbaar",
+    "omarchy-theme": "Huidig thema: {theme}\nLinker klik: thema-kiezer openen.\nRechter klik: wissel tussen thema's.\nMiddelklik: willekeurig thema.",
     "output-muted": "Uitvoervolume dempen in-/uitschakelen",
     "pause": "Pauzeren",
     "play": "Afspelen",

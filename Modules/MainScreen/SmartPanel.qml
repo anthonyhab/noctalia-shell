@@ -59,7 +59,9 @@ Item {
 
   // Keyboard event handlers - these can be overridden by panel implementations
   // Note: SmartPanelWindow directly calls these functions via panelWrapper reference
-  function onEscapePressed() {}
+  function onEscapePressed() {
+    return false
+  }
   function onTabPressed() {}
   function onBackTabPressed() {}
   function onUpPressed() {}

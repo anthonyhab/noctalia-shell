@@ -352,6 +352,12 @@
           "description": "Wählen Sie, wie Arbeitsbereichs-Beschriftungen angezeigt werden.",
           "label": "Beschriftungsmodus"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Wählen Sie, wie der Themenname angezeigt wird.",
+          "label": "Anzeigemodus"
+        }
       }
     }
   },
@@ -872,6 +878,25 @@
         "use-wallpaper-colors": {
           "description": "Farbschemata aus Ihrem Hintergrundbild mit Matugen generieren. Extrahiert automatisch Farben für ein kohärentes Design.",
           "label": "Hintergrundbild-Farben verwenden"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Farben aus dem Omarchy-Themensystem synchronisieren.",
+          "label": "Omarchy-Themensynchronisation verwenden"
+        },
+        "active": {
+          "current": "Aktuelles Thema: {theme}",
+          "description": "Weitere Themen unter {url}",
+          "disable": "Omarchy-Integration deaktivieren",
+          "selector": {
+            "label": "Aktuelles Thema"
+          },
+          "syncing": "Themenfarben werden synchronisiert",
+          "title": "Omarchy-Thema aktiv"
+        },
+        "panel": {
+          "title": "Omarchy-Themen"
         }
       },
       "dark-mode": {
@@ -2003,6 +2028,8 @@
     "open-settings": "Einstellungen öffnen",
     "open-tray-dropdown": "Tray-Dropdown öffnen",
     "open-wallpaper-selector": "Hintergrundbild-Auswahl öffnen",
+    "omarchy-not-available": "Omarchy-Integration nicht verfügbar",
+    "omarchy-theme": "Aktuelles Thema: {theme}\nLinksklick: Themenselector öffnen.\nRechtsklick: Themen durchschalten.\nMittelklick: Zufälliges Thema.",
     "output-muted": "Audio-Ausgabe stummschalten",
     "pause": "Pausieren",
     "play": "Wiedergeben",

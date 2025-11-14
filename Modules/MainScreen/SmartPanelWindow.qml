@@ -191,8 +191,10 @@ PanelWindow {
     Keys.onPressed: event => {
                       Logger.d("SmartPanelWindow", "Key pressed:", event.key, "for panel:", placeholder.panelName)
                       if (event.key === Qt.Key_Escape) {
-                        panelWrapper.onEscapePressed()
-                        if (closeWithEscape) {
+                        var handled = panelWrapper && panelWrapper.onEscapePressed ? panelWrapper.onEscapePressed() : false
+                        if (handled) {
+                          event.accepted = true
+                        } else if (closeWithEscape) {
                           root.close()
                           event.accepted = true
                         }

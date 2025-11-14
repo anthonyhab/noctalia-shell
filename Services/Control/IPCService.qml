@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 
 import qs.Commons
+import qs.Services
 import qs.Services.Compositor
 import qs.Services.Hardware
 import qs.Services.Media
@@ -169,6 +170,32 @@ Item {
     target: "colorScheme"
     function set(schemeName: string) {
       ColorSchemeService.setPredefinedScheme(schemeName)
+    }
+  }
+
+  IpcHandler {
+    target: "omarchy"
+    function reload() {
+      if (!OmarchyService.isAvailable()) {
+        Logger.w("Omarchy", "Omarchy config not available")
+        return
+      }
+      // Activate Omarchy (sets active flag) and reload
+      if (!Settings.data.omarchy.active) {
+        OmarchyService.activate()
+      } else {
+        OmarchyService.reload()
+      }
+    }
+    function toggle() {
+      if (Settings.data.omarchy.active) {
+        OmarchyService.deactivate()
+      } else {
+        OmarchyService.activate()
+      }
+    }
+    function setTheme(themeName: string) {
+      OmarchyService.setTheme(themeName)
     }
   }
 

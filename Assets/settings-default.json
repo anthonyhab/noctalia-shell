@@ -335,6 +335,9 @@
     "wallpaperChange": "",
     "darkModeChange": ""
   },
+  "omarchy": {
+    "active": false
+  },
   "battery": {
     "chargingMode": 0
   }

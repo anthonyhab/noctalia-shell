@@ -483,6 +483,11 @@ Singleton {
       property string darkModeChange: ""
     }
 
+    // omarchy
+    property JsonObject omarchy: JsonObject {
+      property bool active: false
+    }
+
     // battery
     property JsonObject battery: JsonObject {
       property int chargingMode: 0

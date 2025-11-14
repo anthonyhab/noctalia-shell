@@ -20,13 +20,17 @@ Popup {
   height: content.implicitHeight + padding * 2
   padding: Style.marginXL
   modal: true
+  closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
   anchors.centerIn: parent
 
   onOpened: {
+    PanelService.registerPanelPopup(root)
     if (widgetData && widgetId) {
       loadWidgetSettings()
     }
   }
+
+  onClosed: PanelService.unregisterPanelPopup(root)
 
   background: Rectangle {
     color: Color.mSurface

@@ -13,6 +13,7 @@ import Quickshell.Services.SystemTray
 
 // Commons & Services
 import qs.Commons
+import qs.Services
 import qs.Services.Control
 import qs.Services.Theming
 import qs.Services.Hardware
@@ -25,6 +26,7 @@ import qs.Services.UI
 // Modules
 import qs.Modules.Background
 import qs.Modules.Bar
+import qs.Modules.Bar.Omarchy
 import qs.Modules.Dock
 import qs.Modules.MainScreen
 import qs.Modules.LockScreen
@@ -72,6 +74,7 @@ ShellRoot {
         SystemTrayService.init()
         WallpaperService.init()
         AppThemeService.init()
+        OmarchyService.init()
         ColorSchemeService.init()
         LocationService.init()
         NightLightService.apply()

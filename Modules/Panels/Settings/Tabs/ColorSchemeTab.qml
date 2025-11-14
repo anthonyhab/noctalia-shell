@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Services
 import qs.Services.Theming
 import qs.Services.System
 import qs.Services.UI
@@ -154,6 +155,7 @@ ColumnLayout {
   NHeader {
     label: I18n.tr("settings.color-scheme.color-source.section.label")
     description: I18n.tr("settings.color-scheme.color-source.section.description")
+    visible: !Settings.data.omarchy.active
   }
 
   // Dark Mode Toggle
@@ -161,6 +163,7 @@ ColumnLayout {
     label: I18n.tr("settings.color-scheme.dark-mode.switch.label")
     description: I18n.tr("settings.color-scheme.dark-mode.switch.description")
     checked: Settings.data.colorSchemes.darkMode
+    visible: !Settings.data.omarchy.active
     onToggled: checked => {
                  Settings.data.colorSchemes.darkMode = checked
                  root.cacheVersion++ // Force UI update for dark/light variants
@@ -170,6 +173,7 @@ ColumnLayout {
   NComboBox {
     label: I18n.tr("settings.color-scheme.dark-mode.mode.label")
     description: I18n.tr("settings.color-scheme.dark-mode.mode.description")
+    visible: !Settings.data.omarchy.active
 
     model: [{
         "name": I18n.tr("settings.color-scheme.dark-mode.mode.off"),
@@ -193,7 +197,7 @@ ColumnLayout {
   // Manual scheduling
   ColumnLayout {
     spacing: Style.marginS
-    visible: Settings.data.colorSchemes.schedulingMode === "manual"
+    visible: Settings.data.colorSchemes.schedulingMode === "manual" && !Settings.data.omarchy.active
 
     NLabel {
       label: I18n.tr("settings.display.night-light.manual-schedule.label")
@@ -242,7 +246,9 @@ ColumnLayout {
   NToggle {
     label: I18n.tr("settings.color-scheme.color-source.use-wallpaper-colors.label")
     description: I18n.tr("settings.color-scheme.color-source.use-wallpaper-colors.description")
-    enabled: ProgramCheckerService.matugenAvailable
+    visible: !Settings.data.omarchy.active
+    enabled: ProgramCheckerService.matugenAvailable && !Settings.data.omarchy.active
+    opacity: (ProgramCheckerService.matugenAvailable && !Settings.data.omarchy.active) ? 1.0 : 0.6
     checked: Settings.data.colorSchemes.useWallpaperColors
     onToggled: checked => {
                  if (checked) {
@@ -258,13 +264,328 @@ ColumnLayout {
                }
   }
 
+  // Enable Omarchy Integration
+  NToggle {
+    label: I18n.tr("settings.color-scheme.omarchy.activate.label")
+    description: I18n.tr("settings.color-scheme.omarchy.activate.description")
+    visible: !Settings.data.omarchy.active
+    enabled: OmarchyService.available && !Settings.data.omarchy.active
+    opacity: (OmarchyService.available && !Settings.data.omarchy.active) ? 1.0 : 0.6
+    checked: false
+    onVisibleChanged: {
+      if (visible) {
+        checked = false
+      }
+    }
+    onToggled: checked => {
+                 if (checked) {
+                   if (!OmarchyService.activate()) {
+                     checked = false
+                   }
+                 }
+               }
+  }
+
+  // Omarchy Active Indicator
+  NBox {
+    visible: Settings.data.omarchy.active
+    Layout.fillWidth: true
+    Layout.topMargin: Style.marginM
+    color: Color.mSurfaceVariant
+    border.color: Color.mOutline
+    border.width: Style.borderS
+    radius: Style.radiusM
+    implicitHeight: omarchyContent.implicitHeight + Style.marginL * 2
+
+    ColumnLayout {
+      id: omarchyContent
+      anchors.fill: parent
+      anchors.margins: Style.marginL
+      spacing: Style.marginS
+
+      // Header row with icon
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginS
+
+        NText {
+          text: I18n.tr("settings.color-scheme.omarchy.active.title")
+          pointSize: Style.fontSizeL
+          font.weight: Font.DemiBold
+          color: Color.mOnSurface
+          Layout.fillWidth: true
+        }
+      }
+
+      // Description
+      NText {
+        text: I18n.tr("settings.color-scheme.omarchy.active.description", {
+                        "url": "https://omarchythemes.com/"
+                      })
+        pointSize: Style.fontSizeS
+        color: Color.mOnSurfaceVariant
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+      }
+
+      // Theme selector
+      RowLayout {
+        spacing: Style.marginL
+        Layout.fillWidth: true
+        Layout.topMargin: Style.marginS
+        visible: OmarchyService.availableThemes.length > 0
+
+        NLabel {
+          label: I18n.tr("settings.color-scheme.omarchy.active.selector.label")
+        }
+
+        ComboBox {
+          id: themeCombo
+          Layout.minimumWidth: 300 * Style.uiScaleRatio
+          Layout.preferredHeight: Style.baseWidgetSize * 1.1 * Style.uiScaleRatio
+
+          model: OmarchyService.availableThemes
+
+          currentIndex: {
+            for (var i = 0; i < OmarchyService.availableThemes.length; i++) {
+              var theme = OmarchyService.availableThemes[i]
+              var themeName = typeof theme === 'string' ? theme : theme.name
+              if (themeName === OmarchyService.themeName)
+                return i
+            }
+            return -1
+          }
+
+          onActivated: function (index) {
+            if (index >= 0 && index < OmarchyService.availableThemes.length) {
+              var theme = OmarchyService.availableThemes[index]
+              var themeName = typeof theme === 'string' ? theme : theme.name
+              OmarchyService.setTheme(themeName)
+            }
+          }
+
+          background: Rectangle {
+            implicitWidth: Style.baseWidgetSize * 3.75
+            implicitHeight: Style.baseWidgetSize * 1.1 * Style.uiScaleRatio
+            color: Color.mSurface
+            border.color: themeCombo.activeFocus ? Color.mSecondary : Color.mOutline
+            border.width: Style.borderS
+            radius: Style.radiusM
+
+            Behavior on border.color {
+              ColorAnimation {
+                duration: Style.animationFast
+              }
+            }
+          }
+
+          contentItem: Item {
+            RowLayout {
+              anchors.fill: parent
+              anchors.leftMargin: Style.marginL
+              anchors.rightMargin: themeCombo.indicator.width + Style.marginL
+              spacing: Style.marginS
+
+              NText {
+                pointSize: Style.fontSizeM
+                verticalAlignment: Text.AlignVCenter
+                color: themeCombo.currentIndex >= 0 ? Color.mOnSurface : Color.mOnSurfaceVariant
+                text: {
+                  if (themeCombo.currentIndex >= 0 && themeCombo.currentIndex < OmarchyService.availableThemes.length) {
+                    var theme = OmarchyService.availableThemes[themeCombo.currentIndex]
+                    return typeof theme === 'string' ? theme : theme.name
+                  }
+                  return ""
+                }
+                Layout.fillWidth: true
+              }
+
+              // Color preview circles
+              Row {
+                spacing: Style.marginXS
+                visible: {
+                  if (themeCombo.currentIndex >= 0 && themeCombo.currentIndex < OmarchyService.availableThemes.length) {
+                    var theme = OmarchyService.availableThemes[themeCombo.currentIndex]
+                    return theme.colors && theme.colors.length > 0
+                  }
+                  return false
+                }
+
+                Repeater {
+                  model: {
+                    if (themeCombo.currentIndex >= 0 && themeCombo.currentIndex < OmarchyService.availableThemes.length) {
+                      var theme = OmarchyService.availableThemes[themeCombo.currentIndex]
+                      return theme.colors || []
+                    }
+                    return []
+                  }
+
+                  Rectangle {
+                    width: Style.fontSizeM
+                    height: Style.fontSizeM
+                    radius: width / 2
+                    color: modelData
+                    border.color: Qt.darker(modelData, 1.2)
+                    border.width: 1
+                  }
+                }
+              }
+            }
+          }
+
+          indicator: NIcon {
+            x: themeCombo.width - width - Style.marginM
+            y: themeCombo.topPadding + (themeCombo.availableHeight - height) / 2
+            icon: "caret-down"
+            pointSize: Style.fontSizeL
+          }
+
+          popup: Popup {
+            y: themeCombo.height
+            implicitWidth: themeCombo.width - Style.marginM
+            implicitHeight: Math.min(180 * Style.uiScaleRatio, contentItem.implicitHeight + Style.marginM * 2)
+            padding: Style.marginM
+
+            onOpened: {
+              PanelService.willOpenPopup(themeCombo)
+            }
+
+            onClosed: {
+              PanelService.willClosePopup(themeCombo)
+            }
+
+            contentItem: NListView {
+              model: themeCombo.popup.visible ? OmarchyService.availableThemes : null
+              implicitHeight: contentHeight
+              horizontalPolicy: ScrollBar.AlwaysOff
+              verticalPolicy: ScrollBar.AsNeeded
+
+              delegate: ItemDelegate {
+                width: ListView.view.width
+                topPadding: Style.marginM
+                bottomPadding: Style.marginM
+                hoverEnabled: true
+                highlighted: ListView.view.currentIndex === index
+
+                onHoveredChanged: {
+                  if (hovered) {
+                    ListView.view.currentIndex = index
+                  }
+                }
+
+                onClicked: {
+                  themeCombo.currentIndex = index
+                  var theme = OmarchyService.availableThemes[index]
+                  var themeName = typeof theme === 'string' ? theme : theme.name
+                  OmarchyService.setTheme(themeName)
+                  themeCombo.popup.close()
+                }
+
+                background: Rectangle {
+                  anchors.fill: parent
+                  anchors.margins: Style.marginXS
+                  color: highlighted ? Color.mHover : Color.transparent
+                  radius: Style.radiusS
+
+                  Behavior on color {
+                    ColorAnimation {
+                      duration: Style.animationFast
+                    }
+                  }
+                }
+
+                contentItem: RowLayout {
+                  spacing: Style.marginS
+
+                  NText {
+                    text: {
+                      var theme = OmarchyService.availableThemes[index]
+                      return typeof theme === 'string' ? theme : theme.name
+                    }
+                    pointSize: Style.fontSizeM
+                    color: highlighted ? Color.mOnHover : Color.mOnSurface
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: Style.marginS
+                    Layout.fillWidth: true
+
+                    Behavior on color {
+                      ColorAnimation {
+                        duration: Style.animationFast
+                      }
+                    }
+                  }
+
+                  // Color preview circles in dropdown
+                  Row {
+                    spacing: Style.marginXS
+                    Layout.rightMargin: Style.marginM
+                    visible: {
+                      var theme = OmarchyService.availableThemes[index]
+                      return theme.colors && theme.colors.length > 0
+                    }
+
+                    Repeater {
+                      model: {
+                        var theme = OmarchyService.availableThemes[index]
+                        return theme.colors || []
+                      }
+
+                      Rectangle {
+                        width: Style.fontSizeM
+                        height: Style.fontSizeM
+                        radius: width / 2
+                        color: modelData
+                        border.color: Qt.darker(modelData, 1.2)
+                        border.width: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            background: Rectangle {
+              color: Color.mSurfaceVariant
+              border.color: Color.mOutline
+              border.width: Style.borderS
+              radius: Style.radiusM
+            }
+          }
+        }
+      }
+
+      // Current theme (fallback if no themes available)
+      NText {
+        text: OmarchyService.themeName ? I18n.tr("settings.color-scheme.omarchy.active.current", {
+                                 "theme": OmarchyService.themeName
+                               }) : I18n.tr("settings.color-scheme.omarchy.active.syncing")
+        pointSize: Style.fontSizeS
+        font.weight: Font.Medium
+        color: Color.mOnSurface
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        Layout.topMargin: Style.marginXS
+        visible: OmarchyService.availableThemes.length === 0
+      }
+
+      // Button
+      NButton {
+        text: I18n.tr("settings.color-scheme.omarchy.active.disable")
+        Layout.topMargin: Style.marginS
+        onClicked: {
+          OmarchyService.deactivate()
+        }
+      }
+    }
+  }
+
   // Matugen Scheme Type Selection [Descriptions sourced from DankMaterialShell]
   NComboBox {
     label: I18n.tr("settings.color-scheme.color-source.matugen-scheme-type.label")
     description: I18n.tr("settings.color-scheme.color-source.matugen-scheme-type.description." + Settings.data.colorSchemes.matugenSchemeType)
     enabled: Settings.data.colorSchemes.useWallpaperColors
     opacity: Settings.data.colorSchemes.useWallpaperColors ? 1.0 : 0.6
-    visible: Settings.data.colorSchemes.useWallpaperColors
+    visible: Settings.data.colorSchemes.useWallpaperColors && !Settings.data.omarchy.active
 
     model: [{
         "key": "scheme-content",
@@ -304,14 +625,14 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.topMargin: Style.marginL
     Layout.bottomMargin: Style.marginL
-    visible: !Settings.data.colorSchemes.useWallpaperColors
+    visible: !Settings.data.colorSchemes.useWallpaperColors && !Settings.data.omarchy.active
   }
 
   // Predefined Color Schemes
   ColumnLayout {
     spacing: Style.marginM
     Layout.fillWidth: true
-    visible: !Settings.data.colorSchemes.useWallpaperColors
+    visible: !Settings.data.colorSchemes.useWallpaperColors && !Settings.data.omarchy.active
 
     NHeader {
       label: I18n.tr("settings.color-scheme.predefined.section.label")
