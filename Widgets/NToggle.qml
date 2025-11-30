@@ -26,6 +26,7 @@ RowLayout {
     label: root.label
     description: root.description
     visible: root.label !== "" || root.description !== ""
+    Layout.fillWidth: true
   }
 
   Rectangle {

@@ -259,10 +259,11 @@ SmartPanel {
   // Override keyboard handlers from SmartPanel
   function onEscapePressed() {
     if (timerActive) {
-      cancelTimer();
-    } else {
-      root.close();
+      cancelTimer()
+      return true
     }
+    root.close()
+    return true
   }
 
   function onTabPressed() {

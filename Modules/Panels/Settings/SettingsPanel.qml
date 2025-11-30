@@ -7,6 +7,7 @@ import qs.Modules.MainScreen
 import qs.Modules.Panels.Settings.Tabs
 import qs.Modules.Panels.Settings.Tabs.ColorScheme
 import qs.Services.System
+import qs.Services.UI
 import qs.Widgets
 
 SmartPanel {
@@ -14,6 +15,7 @@ SmartPanel {
 
   preferredWidth: Math.round(820 * Style.uiScaleRatio)
   preferredHeight: Math.round(910 * Style.uiScaleRatio)
+  closeWithEscape: false
 
   readonly property bool attachToBar: Settings.data.ui.settingsPanelAttachToBar
   readonly property string barPosition: Settings.data.bar.position
@@ -57,6 +59,17 @@ SmartPanel {
     if (isPanelOpen) {
       Qt.callLater(root.setPosition);
     }
+  }
+
+  function onEscapePressed() {
+    if (closeTopPopup())
+      return true
+    root.close()
+    return true
+  }
+
+  function closeTopPopup() {
+    return PanelService.closeTopPopup()
   }
 
   // Tabs enumeration, order is NOT relevant

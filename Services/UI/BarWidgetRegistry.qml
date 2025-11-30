@@ -27,7 +27,8 @@ Singleton {
                            "NightLight": nightLightComponent,
                            "NoctaliaPerformance": noctaliaPerformanceComponent,
                            "NotificationHistory": notificationHistoryComponent,
-                           "PowerProfile": powerProfileComponent,
+                           "OmarchyThemeSwitcher": omarchyThemeSwitcherComponent,
+                           "PowerProfile": powerProfileComponent, // HEAVY
                            "ScreenRecorder": screenRecorderComponent,
                            "SessionMenu": sessionMenuComponent,
                            "Spacer": spacerComponent,
@@ -56,6 +57,7 @@ Singleton {
                                      "MediaMini": "WidgetSettings/MediaMiniSettings.qml",
                                      "Microphone": "WidgetSettings/MicrophoneSettings.qml",
                                      "NotificationHistory": "WidgetSettings/NotificationHistorySettings.qml",
+                                     "OmarchyThemeSwitcher": "WidgetSettings/OmarchyThemeSwitcherSettings.qml",
                                      "SessionMenu": "WidgetSettings/SessionMenuSettings.qml",
                                      "Spacer": "WidgetSettings/SpacerSettings.qml",
                                      "SystemMonitor": "WidgetSettings/SystemMonitorSettings.qml",
@@ -174,6 +176,10 @@ Singleton {
                                     "showUnreadBadge": true,
                                     "hideWhenZero": true
                                   },
+                                  "OmarchyThemeSwitcher": {
+                                    "allowUserSettings": true,
+                                    "displayMode": "onhover"
+                                  },
                                   "SessionMenu": {
                                     "allowUserSettings": true,
                                     "colorName": "error"
@@ -283,6 +289,9 @@ Singleton {
   }
   property Component notificationHistoryComponent: Component {
     NotificationHistory {}
+  }
+  property Component omarchyThemeSwitcherComponent: Component {
+    OmarchyThemeSwitcher {}
   }
   property Component powerProfileComponent: Component {
     PowerProfile {}

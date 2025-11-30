@@ -10,6 +10,7 @@ import qs.Commons
 // All panels
 import qs.Modules.Bar
 import qs.Modules.Bar.Extras
+import qs.Modules.Bar.Omarchy
 import qs.Modules.Panels.Audio
 import qs.Modules.Panels.Battery
 import qs.Modules.Panels.Bluetooth
@@ -49,6 +50,7 @@ PanelWindow {
   readonly property alias setupWizardPanel: setupWizardPanel
   readonly property alias trayDrawerPanel: trayDrawerPanel
   readonly property alias wallpaperPanel: wallpaperPanel
+  readonly property alias omarchyThemePanel: omarchyThemePanel
   readonly property alias wifiPanel: wifiPanel
 
   // Expose panel backgrounds for AllBackgrounds
@@ -66,6 +68,7 @@ PanelWindow {
   readonly property var setupWizardPanelPlaceholder: setupWizardPanel.panelRegion
   readonly property var trayDrawerPanelPlaceholder: trayDrawerPanel.panelRegion
   readonly property var wallpaperPanelPlaceholder: wallpaperPanel.panelRegion
+  readonly property var omarchyThemePanelPlaceholder: omarchyThemePanel.panelRegion
   readonly property var wifiPanelPlaceholder: wifiPanel.panelRegion
 
   Component.onCompleted: {
@@ -299,6 +302,17 @@ PanelWindow {
       objectName: "wallpaperPanel-" + (root.screen?.name || "unknown")
       screen: root.screen
       z: 50
+    }
+
+    OmarchyThemePanel {
+      id: omarchyThemePanel
+      screen: root.screen
+      z: 50
+
+      Component.onCompleted: {
+        objectName = "omarchyThemePanel-" + (screen?.name || "unknown")
+        PanelService.registerPanel(omarchyThemePanel)
+      }
     }
 
     WiFiPanel {

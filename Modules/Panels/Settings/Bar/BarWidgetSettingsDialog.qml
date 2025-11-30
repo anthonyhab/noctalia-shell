@@ -17,14 +17,19 @@ Popup {
 
   signal updateWidgetSettings(string section, int index, var settings)
 
-  width: Math.max(content.implicitWidth + padding * 2, 500)
+  readonly property real minDialogWidth: Math.round(700 * Style.uiScaleRatio)
+  readonly property real overlayAvailableWidth: parent ? parent.width - Style.marginXL * 2 : minDialogWidth
+
+  width: Math.min(Math.max(content.implicitWidth + padding * 2, minDialogWidth), Math.max(overlayAvailableWidth, 0))
   height: content.implicitHeight + padding * 2
   padding: Style.marginXL
   modal: true
+  closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
   dim: false
   anchors.centerIn: parent
 
   onOpened: {
+    PanelService.registerPanelPopup(root)
     // Load settings when popup opens with data
     if (widgetData && widgetId) {
       loadWidgetSettings();
@@ -32,6 +37,8 @@ Popup {
     // Request focus to ensure keyboard input works
     forceActiveFocus();
   }
+
+  onClosed: PanelService.unregisterPanelPopup(root)
 
   background: Rectangle {
     id: bgRect

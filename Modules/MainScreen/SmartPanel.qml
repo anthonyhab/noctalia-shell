@@ -78,6 +78,8 @@ Item {
   }
   function onShiftTabPressed() {
   }
+  function onBackTabPressed() {
+  }
   function onUpPressed() {
   }
   function onDownPressed() {
@@ -99,6 +101,10 @@ Item {
   function onCtrlJPressed() {
   }
   function onCtrlKPressed() {
+  }
+  function onCtrlNPressed() {
+  }
+  function onCtrlPPressed() {
   }
 
   // Expose panel region for click-through mask

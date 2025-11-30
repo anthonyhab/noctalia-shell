@@ -12,10 +12,12 @@ import Quickshell.Services.SystemTray
 
 // Commons & Services
 import qs.Commons
+import qs.Services
 
 // Modules
 import qs.Modules.Background
 import qs.Modules.Bar
+import qs.Modules.Bar.Omarchy
 import qs.Modules.Dock
 import qs.Modules.LockScreen
 import qs.Modules.MainScreen
@@ -84,22 +86,23 @@ ShellRoot {
 
     sourceComponent: Item {
       Component.onCompleted: {
-        Logger.i("Shell", "---------------------------");
-        WallpaperService.init();
-        AppThemeService.init();
-        ColorSchemeService.init();
-        LocationService.init();
-        NightLightService.apply();
-        DarkModeService.init();
-        HooksService.init();
-        BluetoothService.init();
-        IdleInhibitorService.init();
-        PowerProfileService.init();
-        HostService.init();
-        FontService.init();
-        GitHubService.init();
-        UpdateService.init();
-        UpdateService.showLatestChangelog();
+        Logger.i("Shell", "---------------------------")
+        WallpaperService.init()
+        AppThemeService.init()
+        OmarchyService.init()
+        ColorSchemeService.init()
+        LocationService.init()
+        NightLightService.apply()
+        DarkModeService.init()
+        HooksService.init()
+        BluetoothService.init()
+        IdleInhibitorService.init()
+        PowerProfileService.init()
+        HostService.init()
+        FontService.init()
+        GitHubService.init()
+        UpdateService.init()
+        UpdateService.showLatestChangelog()
 
         checkSetupWizard();
       }

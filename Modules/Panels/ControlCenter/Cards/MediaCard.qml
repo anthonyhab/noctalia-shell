@@ -4,6 +4,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Services
 import qs.Services.Media
 import qs.Services.UI
 import qs.Widgets
@@ -51,7 +52,7 @@ NBox {
       id: bgImage
       readonly property int dim: Math.round(256 * Style.uiScaleRatio)
       anchors.fill: parent
-      source: MediaService.trackArtUrl || wallpaper
+      source: MediaService.trackArtUrl || (Settings.data.omarchy.active ? OmarchyService.omarchyBackgroundPath : wallpaper)
       sourceSize: Qt.size(dim, dim)
       fillMode: Image.PreserveAspectCrop
       layer.enabled: true

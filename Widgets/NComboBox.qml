@@ -55,6 +55,7 @@ RowLayout {
   NLabel {
     label: root.label
     description: root.description
+    Layout.fillWidth: true
   }
 
   ComboBox {

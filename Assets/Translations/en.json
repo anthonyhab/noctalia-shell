@@ -362,6 +362,12 @@
           "description": "Choose how workspace labels are displayed.",
           "label": "Label mode"
         }
+      },
+      "omarchy-theme-switcher": {
+        "display-mode": {
+          "description": "Choose how theme name is displayed.",
+          "label": "Display mode"
+        }
       }
     }
   },
@@ -524,6 +530,9 @@
       "diffMM": "{diff} minutes ago",
       "now": "now"
     }
+  },
+  "omarchy": {
+    "no-themes": "No Omarchy themes available"
   },
   "options": {
     "bar": {
@@ -978,6 +987,29 @@
         "use-wallpaper-colors": {
           "description": "Generate color schemes from your wallpaper using Matugen. Automatically extracts colors to create a cohesive theme.",
           "label": "Use wallpaper colors"
+        }
+      },
+      "omarchy": {
+        "activate": {
+          "description": "Sync colors from the Omarchy theming system.",
+          "label": "Use Omarchy theme sync"
+        },
+        "active": {
+          "current": "Current theme: {theme}",
+          "custom-command": {
+            "description": "Use a custom script instead of the default omarchy-theme-set. Leave empty to use default.",
+            "label": "Custom theme-set command"
+          },
+          "description": "Get more themes at {url}",
+          "disable": "Disable Omarchy integration",
+          "selector": {
+            "label": "Current theme"
+          },
+          "syncing": "Synchronizing theme colors",
+          "title": "Omarchy theme active"
+        },
+        "panel": {
+          "title": "Omarchy themes"
         }
       },
       "dark-mode": {
@@ -2164,6 +2196,15 @@
       "started": "Recording started",
       "stopping": "Stopping recording…"
     },
+    "omarchy": {
+      "config-not-found": "Omarchy config not found",
+      "failed-to-load": "Failed to load Omarchy theme",
+      "failed-to-switch": "Failed to switch theme",
+      "not-available": "Omarchy is not available",
+      "theme-applied": "Set to {theme}",
+      "theme-not-found": "Theme '{theme}' not found",
+      "title": "Omarchy"
+    },
     "theming-processor-failed": {
       "desc-generic": "Encountered an error while processing templates.",
       "title-matugen": "Matugen templating processing failed",
@@ -2230,6 +2271,9 @@
     "open-settings": "Open settings",
     "open-tray-dropdown": "Open tray dropdown",
     "open-wallpaper-selector": "Open wallpaper selector",
+    "omarchy-inactive": "Omarchy integration is disabled",
+    "omarchy-not-available": "Omarchy integration not available",
+    "omarchy-theme": "Current theme: {theme}\nLeft click: open theme selector.\nRight click: cycle themes.\nMiddle click: random theme.",
     "output-muted": "Toggle output mute",
     "pause": "Pause",
     "play": "Play",

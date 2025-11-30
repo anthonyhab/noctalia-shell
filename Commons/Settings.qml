@@ -571,6 +571,17 @@ Singleton {
       property string wallpaperChange: ""
       property string darkModeChange: ""
     }
+
+    // omarchy
+    property JsonObject omarchy: JsonObject {
+      property bool active: false
+      property string themeSetCommand: ""  // Custom path to theme-set script (e.g., ~/.local/bin/my-theme-set)
+    }
+
+    // battery
+    property JsonObject battery: JsonObject {
+      property int chargingMode: 0
+    }
   }
 
   // -----------------------------------------------------
