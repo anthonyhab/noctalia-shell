@@ -28,7 +28,8 @@ Slider {
   padding: cutoutExtra / 2
 
   snapMode: snapAlways ? Slider.SnapAlways : Slider.SnapOnRelease
-  implicitWidth: Math.max(trackWidth, knobDiameter)
+  implicitWidth: Math.max(trackWidth, knobDiameter + cutoutExtra)
+  clip: false
 
   background: Rectangle {
     anchors.horizontalCenter: parent.horizontalCenter

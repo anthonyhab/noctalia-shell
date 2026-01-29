@@ -24,7 +24,9 @@ Slider {
   padding: cutoutExtra / 2
 
   snapMode: snapAlways ? Slider.SnapAlways : Slider.SnapOnRelease
-  implicitHeight: Math.max(trackHeight, knobDiameter)
+  implicitHeight: Math.max(trackHeight, knobDiameter + cutoutExtra)
+  clip: false
+  layer.enabled: true
 
   background: Rectangle {
     x: root.leftPadding
