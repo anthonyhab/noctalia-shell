@@ -22,10 +22,13 @@ Slider {
   readonly property real trackRadius: Math.min(Style.iRadiusL, trackHeight / 2)
   readonly property real cutoutExtra: Math.round((Style.baseWidgetSize * 0.1 * Style.uiScaleRatio) / 2) * 2
 
+  readonly property real knobTravel: root.availableWidth - root.knobDiameter
+  readonly property real knobPos: root.visualPosition * knobTravel
+
   padding: cutoutExtra / 2
 
   snapMode: snapAlways ? Slider.SnapAlways : Slider.SnapOnRelease
-  implicitHeight: Math.max(trackHeight, knobDiameter)
+  implicitHeight: Math.max(trackHeight, knobDiameter + cutoutExtra)
 
   background: Item {
     id: bgContainer
@@ -36,7 +39,7 @@ Slider {
     width: root.availableWidth
     height: root.trackHeight
 
-    readonly property real fillWidth: root.visualPosition * width
+    readonly property real fillWidth: Math.max(0, Math.min(width, root.knobPos))
 
     // Background track
     Shape {
@@ -185,7 +188,7 @@ Slider {
       implicitHeight: root.knobDiameter + root.cutoutExtra
       radius: Math.min(Style.iRadiusL, width / 2)
       color: root.cutoutColor !== undefined ? root.cutoutColor : Color.mSurface
-      x: root.visualPosition * (root.availableWidth - root.knobDiameter) - root.cutoutExtra / 2
+      x: root.knobPos - root.cutoutExtra / 2
       anchors.verticalCenter: parent.verticalCenter
     }
   }
@@ -193,7 +196,7 @@ Slider {
   handle: Item {
     implicitWidth: knobDiameter
     implicitHeight: knobDiameter
-    x: root.leftPadding + root.visualPosition * (root.availableWidth - width)
+    x: root.leftPadding + root.knobPos
     anchors.verticalCenter: parent.verticalCenter
 
     Rectangle {

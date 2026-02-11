@@ -23,12 +23,15 @@ Slider {
   readonly property real trackRadius: Math.min(Style.iRadiusL, trackWidth / 2)
   readonly property real cutoutExtra: Math.round((Style.baseWidgetSize * 0.1 * Style.uiScaleRatio) / 2) * 2
 
+  readonly property real knobTravel: root.availableHeight - root.knobDiameter
+  readonly property real knobPos: root.visualPosition * knobTravel
+
   orientation: Qt.Vertical
 
   padding: cutoutExtra / 2
 
   snapMode: snapAlways ? Slider.SnapAlways : Slider.SnapOnRelease
-  implicitWidth: Math.max(trackWidth, knobDiameter)
+  implicitWidth: Math.max(trackWidth, knobDiameter + cutoutExtra)
 
   background: Item {
     id: bgContainer
@@ -158,7 +161,7 @@ Slider {
       implicitHeight: root.knobDiameter + root.cutoutExtra
       radius: Math.min(Style.iRadiusL, width / 2)
       color: root.cutoutColor !== undefined ? root.cutoutColor : Color.mSurface
-      y: root.visualPosition * (root.availableHeight - root.knobDiameter) - root.cutoutExtra / 2
+      y: root.knobPos - root.cutoutExtra / 2
       anchors.horizontalCenter: parent.horizontalCenter
     }
   }
@@ -166,7 +169,7 @@ Slider {
   handle: Item {
     implicitWidth: root.knobDiameter
     implicitHeight: root.knobDiameter
-    y: root.topPadding + root.visualPosition * (root.availableHeight - height)
+    y: root.topPadding + root.knobPos
     anchors.horizontalCenter: parent.horizontalCenter
 
     Rectangle {
