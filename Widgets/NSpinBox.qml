@@ -132,7 +132,7 @@ RowLayout {
     Item {
       id: decreaseButton
       height: parent.height
-      width: leftSemicircle.width + (leftDiamondContainer.width / 2)
+      width: leftSemicircle.width + leftDiamondClipper.width
       anchors.top: parent.top
       anchors.bottom: parent.bottom
       anchors.left: parent.left
@@ -160,45 +160,54 @@ RowLayout {
       }
 
       Item {
-        id: leftDiamondContainer
-
-        height: Math.round(parent.height / 2) * 2
-        width: height * Math.sqrt(2)
+        id: leftDiamondClipper
+        height: parent.height
+        width: leftDiamondContainer.width / 2
         anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenter: leftSemicircle.right
+        anchors.left: leftSemicircle.right
+        clip: true
 
-        Rectangle {
-          id: leftDiamondVisual
-          width: 100
-          height: 100
-          radius: width / 4
+        Item {
+          id: leftDiamondContainer
 
-          color: decreaseArea.containsMouse ? Color.mHover : "transparent"
-          Behavior on color {
-            ColorAnimation {
-              duration: Style.animationFast
+          height: Math.round(parent.height / 2) * 2
+          width: height * Math.sqrt(2)
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.horizontalCenter: parent.left
+
+          Rectangle {
+            id: leftDiamondVisual
+            width: 100
+            height: 100
+            radius: width / 4
+
+            color: decreaseArea.containsMouse ? Color.mHover : "transparent"
+            Behavior on color {
+              ColorAnimation {
+                duration: Style.animationFast
+              }
             }
+
+            anchors.centerIn: parent
+
+            transform: [
+              Rotation {
+                angle: 45
+                origin.x: 50
+                origin.y: 50
+              },
+              Scale {
+                id: leftScaler
+                origin.x: 50
+                origin.y: 50
+
+                // This is the full formula for the height of the rotated, rounded square
+                readonly property real trueHeight: (leftDiamondVisual.width - 2 * leftDiamondVisual.radius) * Math.sqrt(2) + (2 * leftDiamondVisual.radius)
+                xScale: leftDiamondContainer.height / leftScaler.trueHeight
+                yScale: leftDiamondContainer.height / leftScaler.trueHeight
+              }
+            ]
           }
-
-          anchors.centerIn: parent
-
-          transform: [
-            Rotation {
-              angle: 45
-              origin.x: 50
-              origin.y: 50
-            },
-            Scale {
-              id: leftScaler
-              origin.x: 50
-              origin.y: 50
-
-              // This is the full formula for the height of the rotated, rounded square
-              readonly property real trueHeight: (leftDiamondVisual.width - 2 * leftDiamondVisual.radius) * Math.sqrt(2) + (2 * leftDiamondVisual.radius)
-              xScale: leftDiamondContainer.height / leftScaler.trueHeight
-              yScale: leftDiamondContainer.height / leftScaler.trueHeight
-            }
-          ]
         }
       }
 
@@ -231,7 +240,7 @@ RowLayout {
     Item {
       id: increaseButton
       height: parent.height
-      width: rightSemicircle.width + (rightDiamondContainer.width / 2)
+      width: rightSemicircle.width + rightDiamondClipper.width
       anchors.top: parent.top
       anchors.bottom: parent.bottom
       anchors.right: parent.right
@@ -259,45 +268,54 @@ RowLayout {
       }
 
       Item {
-        id: rightDiamondContainer
-
-        height: Math.round(parent.height / 2) * 2
-        width: height * Math.sqrt(2)
+        id: rightDiamondClipper
+        height: parent.height
+        width: rightDiamondContainer.width / 2
         anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenter: rightSemicircle.left
+        anchors.right: rightSemicircle.left
+        clip: true
 
-        Rectangle {
-          id: rightDiamondVisual
-          width: 100
-          height: 100
-          radius: width / 4
+        Item {
+          id: rightDiamondContainer
 
-          color: increaseArea.containsMouse ? Color.mHover : "transparent"
-          Behavior on color {
-            ColorAnimation {
-              duration: Style.animationFast
+          height: Math.round(parent.height / 2) * 2
+          width: height * Math.sqrt(2)
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.horizontalCenter: parent.right
+
+          Rectangle {
+            id: rightDiamondVisual
+            width: 100
+            height: 100
+            radius: width / 4
+
+            color: increaseArea.containsMouse ? Color.mHover : "transparent"
+            Behavior on color {
+              ColorAnimation {
+                duration: Style.animationFast
+              }
             }
+
+            anchors.centerIn: parent
+
+            transform: [
+              Rotation {
+                angle: 45
+                origin.x: 50
+                origin.y: 50
+              },
+              Scale {
+                id: rightScaler
+                origin.x: 50
+                origin.y: 50
+
+                // This is the full formula for the height of the rotated, rounded square
+                readonly property real trueHeight: (rightDiamondVisual.width - 2 * rightDiamondVisual.radius) * Math.sqrt(2) + (2 * rightDiamondVisual.radius)
+                xScale: rightDiamondContainer.height / rightScaler.trueHeight
+                yScale: rightDiamondContainer.height / rightScaler.trueHeight
+              }
+            ]
           }
-
-          anchors.centerIn: parent
-
-          transform: [
-            Rotation {
-              angle: 45
-              origin.x: 50
-              origin.y: 50
-            },
-            Scale {
-              id: rightScaler
-              origin.x: 50
-              origin.y: 50
-
-              // This is the full formula for the height of the rotated, rounded square
-              readonly property real trueHeight: (rightDiamondVisual.width - 2 * rightDiamondVisual.radius) * Math.sqrt(2) + (2 * rightDiamondVisual.radius)
-              xScale: rightDiamondContainer.height / rightScaler.trueHeight
-              yScale: rightDiamondContainer.height / rightScaler.trueHeight
-            }
-          ]
         }
       }
 
