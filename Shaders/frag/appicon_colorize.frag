@@ -11,30 +11,33 @@ layout(std140, binding = 0) uniform buf {
 
 void main() {
     vec4 tex = texture(source, qt_TexCoord0);
-    
+    float alpha = tex.a;
+
+    if (alpha <= 0.001) {
+        fragColor = vec4(0.0);
+        return;
+    }
+
+    // Un-premultiply to get raw color values
+    vec3 rgb = tex.rgb / alpha;
+
     float intensity;
-    
+
     if (ubuf.colorizeMode < 0.5) {
-        // Dock mode: Convert to grayscale using proper luminance weights
-        intensity = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+        // Dock mode: grayscale using luminance weights
+        intensity = dot(rgb, vec3(0.299, 0.587, 0.114));
     } else if (ubuf.colorizeMode < 1.5) {
-        // Tray mode: Use the maximum RGB channel value as intensity
-        intensity = max(max(tex.r, tex.g), tex.b);
-        
-        // Normalize intensity to make all icons more uniform
+        // Tray mode: max channel intensity with gentle normalization
+        intensity = max(max(rgb.r, rgb.g), rgb.b);
         intensity = smoothstep(0.1, 0.9, intensity);
     } else {
-    // Distro mode: Brightness boost with proper alpha handling
-    float maxChannel = max(max(tex.r, tex.g), tex.b);
-    
-    intensity = maxChannel * 1.5;
-    intensity = min(intensity, 1.0);
-    intensity = intensity * 0.7 + 0.3;
-    
-    intensity = intensity * tex.a;
-    
-    fragColor = vec4(ubuf.targetColor.rgb * intensity, tex.a) * ubuf.qt_Opacity;
-}
-    
-    fragColor = vec4(ubuf.targetColor.rgb * intensity, tex.a) * ubuf.qt_Opacity;
+        // Distro mode: brightness boost
+        float maxChannel = max(max(rgb.r, rgb.g), rgb.b);
+        intensity = maxChannel * 1.5;
+        intensity = min(intensity, 1.0);
+        intensity = intensity * 0.7 + 0.3;
+    }
+
+    // Re-premultiply for Qt Quick output
+    fragColor = vec4(ubuf.targetColor.rgb * intensity * alpha, alpha) * ubuf.qt_Opacity;
 }

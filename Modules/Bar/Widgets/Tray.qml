@@ -2,15 +2,21 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import QtQuick.Layouts
+import QtQuick.Window
 import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 import qs.Widgets
 
 Item {
+  // Icon scale helper using IconScaling utility
+  function getIconScale(appId, appTitle, iconPath) {
+    return IconScaling.getTrayIconScale(appId, appTitle, iconPath)
+  }
   id: root
 
   property ShellScreen screen
@@ -55,9 +61,10 @@ Item {
     return {};
   }
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isVertical: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVertical: barGeometryConfig.isVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
   readonly property bool density: Settings.data.bar.density
   readonly property int iconSize: Style.toOdd(capsuleHeight * 0.65)
@@ -66,6 +73,8 @@ Item {
   property var pinned: widgetSettings.pinned || widgetMetadata.pinned || [] // Pinned items (shown inline)
   property bool drawerEnabled: widgetSettings.drawerEnabled !== undefined ? widgetSettings.drawerEnabled : (widgetMetadata.drawerEnabled !== undefined ? widgetMetadata.drawerEnabled : true) // Enable drawer panel
   property bool hidePassive: widgetSettings.hidePassive !== undefined ? widgetSettings.hidePassive : true // Hide passive status items
+  property var iconOverrides: widgetSettings.iconOverrides || widgetMetadata.iconOverrides || {} // Icon name overrides by app ID
+  property var iconScales: widgetSettings.iconScales || widgetMetadata.iconScales || {} // Icon scale multipliers by app ID
   readonly property string chevronColorKey: widgetSettings.chevronColor !== undefined ? widgetSettings.chevronColor : widgetMetadata.chevronColor
   readonly property color chevronColor: Color.resolveColorKey(chevronColorKey)
   property var filteredItems: [] // Items to show inline (pinned)
@@ -359,7 +368,7 @@ Item {
       tooltipDirection: BarService.getTooltipDirection(root.screen?.name)
       baseSize: capsuleHeight
       applyUiScale: false
-      customRadius: Style.radiusL
+      customRadius: Style.radiusM
       colorBg: "transparent"
       colorFg: root.chevronColor
       colorBorder: "transparent"
@@ -404,22 +413,61 @@ Item {
           y: Style.pixelAlignCenter(parent.height, height)
         }
 
-        IconImage {
-          id: trayIcon
-          width: iconSize
-          height: iconSize
-          x: Style.pixelAlignCenter(parent.width, width)
-          y: Style.pixelAlignCenter(parent.height, height)
-          asynchronous: true
-          backer.fillMode: Image.PreserveAspectFit
+        // Hidden probe: check if the icon theme has an icon matching this app's tooltip title
+        Image {
+          id: themeProbe
+          visible: false
+          width: 1; height: 1
+          source: {
+            const icon = modelData?.icon || "";
+            if (!icon || icon.startsWith("image://icon/") || icon.includes("?path=")) return "";
+            const title = modelData?.tooltipTitle || modelData?.name || "";
+            if (!title) return "";
+            return "image://icon/" + title.toLowerCase();
+          }
+        }
 
+        // Unified NAutoCropIcon component for all tray icons - ensures mathematically perfect bounding
+        NAutoCropIcon {
+          id: trayIcon
+
+          // Calculate manual scale overrides for specific apps just in case the bounding fails
+          readonly property real explicitScale: {
+            const itemId = modelData?.id || "";
+            // Check for user-configured UI override first
+            if (itemId && root.iconScales[itemId]) {
+              return root.iconScales[itemId];
+            }
+            return Style.iconScaleRatio;
+          }
+
+          renderSize: iconSize
+          manualScale: explicitScale
+          maxSize: capsuleHeight - Style.margin2XS
+          x: Style.pixelAlignCenter(parent.width, renderSize)
+          y: Style.pixelAlignCenter(parent.height, renderSize)
+          
           source: {
             let icon = modelData?.icon || "";
-            if (!icon) {
-              return "";
+            if (!icon) return "";
+
+            // Check for user-configured override
+            const itemId = modelData?.id || "";
+            if (itemId && root.iconOverrides[itemId]) {
+              return "image://icon/" + root.iconOverrides[itemId];
             }
 
-            // Process icon path
+            // Default Steam mono override
+            if (itemId === "steam") {
+              return "image://icon/steam_tray_mono";
+            }
+
+            // If theme has an icon matching this app's title, prefer it over the pixmap
+            if (themeProbe.source && themeProbe.status === Image.Ready) {
+              return themeProbe.source;
+            }
+
+            // Process path-based DBus icons
             if (icon.includes("?path=")) {
               const chunks = icon.split("?path=");
               const name = chunks[0];
@@ -429,13 +477,15 @@ Item {
             }
             return icon;
           }
-          opacity: status === Image.Ready ? 1 : 0
-
-          layer.enabled: widgetSettings.colorizeIcons !== false
-          layer.effect: ShaderEffect {
+          
+          // Apply SDF shader to the underlying node
+          imageNode.layer.enabled: widgetSettings.colorizeIcons !== false
+          imageNode.layer.smooth: true
+          imageNode.layer.mipmap: true
+          imageNode.layer.textureSize: Qt.size(imageNode.sourceSize.width, imageNode.sourceSize.height)
+          imageNode.layer.effect: ShaderEffect {
             property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
             property real colorizeMode: 1.0
-
             fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
           }
         }
@@ -555,7 +605,7 @@ Item {
       tooltipDirection: BarService.getTooltipDirection(root.screen?.name)
       baseSize: capsuleHeight
       applyUiScale: false
-      customRadius: Style.radiusL
+      customRadius: Style.radiusM
       colorBg: "transparent"
       colorFg: root.chevronColor
       colorBorder: "transparent"
