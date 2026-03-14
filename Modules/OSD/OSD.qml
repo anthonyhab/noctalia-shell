@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Hardware
 import qs.Services.Keyboard
 import qs.Services.Media
@@ -492,27 +493,13 @@ Variants {
       anchors.left: isLeft
       anchors.right: isRight
 
-      readonly property string screenBarPosition: Settings.getBarPositionForScreen(root.modelData?.name)
-      readonly property real barHeight: Style.getBarHeightForScreen(root.modelData?.name)
-      readonly property bool isFramed: Settings.data.bar.barType === "framed"
-      readonly property real frameThickness: Settings.data.bar.frameThickness ?? 8
+      readonly property var barInsets: ShellGeometryPolicy.barAvoidanceInsets(root.modelData?.name)
 
       function calculateMargin(isAnchored, position) {
         if (!isAnchored)
           return 0;
 
-        let base = Style.marginM;
-        if (screenBarPosition === position) {
-          const isVertical = position === "top" || position === "bottom";
-          const floatExtra = Math.ceil(Settings.data.bar.barType === "floating" ? (isVertical ? Settings.data.bar.marginVertical : Settings.data.bar.marginHorizontal) : 0);
-          return barHeight + base + floatExtra;
-        }
-
-        if (isFramed) {
-          return base + frameThickness;
-        }
-
-        return base;
+        return Style.marginM + (barInsets[position] || 0);
       }
 
       margins.top: calculateMargin(anchors.top, "top")

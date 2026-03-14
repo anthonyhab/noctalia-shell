@@ -2,22 +2,27 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 
 /**
 * BarExclusionZone - Invisible PanelWindow that reserves exclusive space for the bar
 *
 * This is a minimal window that works with the compositor to reserve space,
 * while the actual bar UI is rendered in NFullScreenWindow.
+*
+* DEPRECATED:
+* Main screen integration should use Modules/MainScreen/BarExclusionZone.qml.
 */
 PanelWindow {
   id: root
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-  readonly property bool barFloating: Settings.data.bar.barType === "floating"
-  readonly property real barMarginH: barFloating ? Settings.data.bar.marginHorizontal : 0
-  readonly property real barMarginV: barFloating ? Settings.data.bar.marginVertical : 0
-  readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barIsVertical: barGeometryConfig.isVertical
+  readonly property bool barFloating: barGeometryConfig.floating
+  readonly property real barMarginH: barGeometryConfig.marginHorizontal
+  readonly property real barMarginV: barGeometryConfig.marginVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
 
   // Invisible - just reserves space
   color: "transparent"
@@ -64,6 +69,7 @@ PanelWindow {
   }
 
   Component.onCompleted: {
+    Logger.w("BarExclusionZone", "Deprecated component instantiated. Use Modules/MainScreen/BarExclusionZone.qml instead.");
     Logger.d("BarExclusionZone", "Created for screen:", screen?.name);
     Logger.d("BarExclusionZone", "  Position:", barPosition, "Floating:", barFloating);
     Logger.d("BarExclusionZone", "  Anchors - top:", anchors.top, "bottom:", anchors.bottom, "left:", anchors.left, "right:", anchors.right);

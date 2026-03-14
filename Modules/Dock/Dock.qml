@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Compositor
 import qs.Services.System
 import qs.Services.UI
@@ -85,7 +86,7 @@ Loader {
       readonly property int indicatorThickness: Settings.data.dock.indicatorThickness || 3
       readonly property string indicatorColorKey: Settings.data.dock.indicatorColor || "primary"
       readonly property real indicatorOpacity: Settings.data.dock.indicatorOpacity !== undefined ? Settings.data.dock.indicatorOpacity : 0.6
-      readonly property int iconSize: Math.round(12 + 24 * (Settings.data.dock.size ?? 1))
+      readonly property int iconSize: Math.round((12 + 24 * (Settings.data.dock.size ?? 1)) * Style.iconScaleRatio)
       readonly property int floatingMargin: Settings.data.dock.floatingRatio * Style.marginL
       readonly property int maxWidth: modelData ? modelData.width * 0.8 : 1000
       readonly property int maxHeight: modelData ? modelData.height * 0.8 : 1000
@@ -95,15 +96,15 @@ Loader {
       readonly property bool isVertical: dockPosition === "left" || dockPosition === "right"
 
       // Bar detection and positioning properties
+      readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(modelData?.name)
+      readonly property var barInsets: ShellGeometryPolicy.barAvoidanceInsets(modelData?.name)
       readonly property bool hasBar: modelData && modelData.name ? (Settings.data.bar.monitors.includes(modelData.name) || (Settings.data.bar.monitors.length === 0)) : false
-      readonly property bool barAtSameEdge: hasBar && Settings.getBarPositionForScreen(modelData?.name) === dockPosition
-      readonly property string barPosition: Settings.getBarPositionForScreen(modelData?.name)
-      readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-      readonly property bool barIsFramed: Settings.data.bar.barType === "framed" && hasBar
-      readonly property bool barFloating: Settings.data.bar.barType === "floating"
-      readonly property real barMarginH: barFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0
-      readonly property real barMarginV: barFloating ? Math.ceil(Settings.data.bar.marginVertical) : 0
-      readonly property int barHeight: Style.getBarHeightForScreen(modelData?.name)
+      readonly property bool barAtSameEdge: hasBar && barGeometryConfig.position === dockPosition
+      readonly property string barPosition: barGeometryConfig.position
+      readonly property bool barIsVertical: barGeometryConfig.isVertical
+      readonly property bool barIsFramed: barGeometryConfig.isFramed && hasBar
+      readonly property int barHeight: barGeometryConfig.barHeight
+      readonly property real geometryEpsilon: SurfaceRenderPolicy.epsilonForScreen(modelData?.name)
       readonly property bool staticPanelOpen: {
         if (!isAttachedMode)
           return false;
@@ -121,35 +122,13 @@ Loader {
         if (isVertical)
           return 0;
         const edgeSize = Math.round(modelData?.width || maxWidth);
-        if (barIsVertical) {
-          if (barPosition === "left") {
-            const availableStart = (barIsFramed ? 0 : barMarginH) + barHeight;
-            const availableWidth = edgeSize - availableStart - (barIsFramed ? Settings.data.bar.frameThickness : 0);
-            return Math.max(0, Math.round(availableStart + (availableWidth - peekEdgeLength) / 2));
-          }
-          if (barPosition === "right") {
-            const availableWidth = edgeSize - (barIsFramed ? 0 : barMarginH) - barHeight - (barIsFramed ? Settings.data.bar.frameThickness : 0);
-            return Math.max(0, Math.round((barIsFramed ? Settings.data.bar.frameThickness : 0) + (availableWidth - peekEdgeLength) / 2));
-          }
-        }
-        return Math.max(0, Math.round((edgeSize - peekEdgeLength) / 2));
+        return ShellGeometryPolicy.centeredOffsetForAxis(modelData?.name, "horizontal", edgeSize, peekEdgeLength);
       }
       readonly property int peekCenterOffsetY: {
         if (!isVertical)
           return 0;
         const edgeSize = Math.round(modelData?.height || maxHeight);
-        if (!barIsVertical) {
-          if (barPosition === "top") {
-            const availableStart = (barIsFramed ? 0 : barMarginV) + barHeight;
-            const availableHeight = edgeSize - availableStart - (barIsFramed ? Settings.data.bar.frameThickness : 0);
-            return Math.max(0, Math.round(availableStart + (availableHeight - peekEdgeLength) / 2));
-          }
-          if (barPosition === "bottom") {
-            const availableHeight = edgeSize - (barIsFramed ? 0 : barMarginV) - barHeight - (barIsFramed ? Settings.data.bar.frameThickness : 0);
-            return Math.max(0, Math.round((barIsFramed ? Settings.data.bar.frameThickness : 0) + (availableHeight - peekEdgeLength) / 2));
-          }
-        }
-        return Math.max(0, Math.round((edgeSize - peekEdgeLength) / 2));
+        return ShellGeometryPolicy.centeredOffsetForAxis(modelData?.name, "vertical", edgeSize, peekEdgeLength);
       }
       readonly property bool showDockIndicator: {
         if (!Settings.data.dock.showDockIndicator || (!autoHide && !isAttachedMode) || !hidden)
@@ -709,8 +688,11 @@ Loader {
           focusable: false
           color: "transparent"
 
-          margins.top: peekCenterOffsetY
-          margins.left: peekCenterOffsetX
+          // When bar is at same edge, position peek window past the bar so it receives mouse events
+          margins.top: isVertical ? peekCenterOffsetY : (dockPosition === "top" && barAtSameEdge && !showDockIndicator ? barInsets.top : 0)
+          margins.bottom: dockPosition === "bottom" && barAtSameEdge && !showDockIndicator ? barInsets.bottom : 0
+          margins.left: !isVertical ? peekCenterOffsetX : (dockPosition === "left" && barAtSameEdge && !showDockIndicator ? barInsets.left : 0)
+          margins.right: dockPosition === "right" && barAtSameEdge && !showDockIndicator ? barInsets.right : 0
 
           WlrLayershell.namespace: "noctalia-dock-peek-" + (screen?.name || "unknown")
           WlrLayershell.layer: WlrLayer.Overlay
@@ -878,34 +860,35 @@ Loader {
           anchors.left: dockPosition === "left"
           anchors.right: dockPosition === "right"
 
-          // Static margins — no animation, window stays put
-          margins.top: dockPosition === "top" ? (barAtSameEdge && !exclusive ? barHeight + (barFloating ? Settings.data.bar.marginVertical : 0) + floatingMargin : floatingMargin) : 0
-          margins.bottom: dockPosition === "bottom" ? (barAtSameEdge && !exclusive ? barHeight + (barFloating ? Settings.data.bar.marginVertical : 0) + floatingMargin : floatingMargin) : 0
-          margins.left: dockPosition === "left" ? (barAtSameEdge && !exclusive ? barHeight + (barFloating ? Settings.data.bar.marginHorizontal : 0) + floatingMargin : floatingMargin) : 0
-          margins.right: dockPosition === "right" ? (barAtSameEdge && !exclusive ? barHeight + (barFloating ? Settings.data.bar.marginHorizontal : 0) + floatingMargin : floatingMargin) : 0
+          // Offset past bar when at same edge (skip bar offset if dock is exclusive - exclusion zones stack)
+          margins.top: dockPosition === "top" ? (barAtSameEdge && !exclusive ? barInsets.top + floatingMargin : floatingMargin) : 0
+          margins.bottom: dockPosition === "bottom" ? (barAtSameEdge && !exclusive ? barInsets.bottom + floatingMargin : floatingMargin) : 0
+          margins.left: dockPosition === "left" ? (barAtSameEdge && !exclusive ? barInsets.left + floatingMargin : floatingMargin) : 0
+          margins.right: dockPosition === "right" ? (barAtSameEdge && !exclusive ? barInsets.right + floatingMargin : floatingMargin) : 0
 
           // Container wrapper for animations
           Item {
             id: dockContainerWrapper
 
             // Helper properties for orthogonal bar detection
-            readonly property string screenBarPosition: Settings.getBarPositionForScreen(modelData?.name)
-            readonly property bool barOnLeft: hasBar && screenBarPosition === "left" && !barFloating
-            readonly property bool barOnRight: hasBar && screenBarPosition === "right" && !barFloating
-            readonly property bool barOnTop: hasBar && screenBarPosition === "top" && !barFloating
-            readonly property bool barOnBottom: hasBar && screenBarPosition === "bottom" && !barFloating
+            readonly property string screenBarPosition: barPosition
+            readonly property bool barOnLeft: hasBar && screenBarPosition === "left" && !barGeometryConfig.floating
+            readonly property bool barOnRight: hasBar && screenBarPosition === "right" && !barGeometryConfig.floating
+            readonly property bool barOnTop: hasBar && screenBarPosition === "top" && !barGeometryConfig.floating
+            readonly property bool barOnBottom: hasBar && screenBarPosition === "bottom" && !barGeometryConfig.floating
 
             // Calculate padding needed to shift center to match exclusive mode
             readonly property int extraTop: (isVertical && !exclusive && barOnTop) ? barHeight : 0
             readonly property int extraBottom: (isVertical && !exclusive && barOnBottom) ? barHeight : 0
             readonly property int extraLeft: (!isVertical && !exclusive && barOnLeft) ? barHeight : 0
             readonly property int extraRight: (!isVertical && !exclusive && barOnRight) ? barHeight : 0
+            readonly property int wrapperBleed: Math.max(2, Math.ceil(root.iconSize * 0.2), Math.ceil(root.geometryEpsilon * 2))
 
             // Expose content size for window sizing (before slide padding)
-            readonly property int contentWidth: dockContent.dockContainer.width + extraLeft + extraRight + 2
-            readonly property int contentHeight: dockContent.dockContainer.height + extraTop + extraBottom + 2
+            // Keep enough transparent padding for scaled icons and anti-aliased edges.
+            readonly property int contentWidth: dockContent.dockContainer.width + extraLeft + extraRight + wrapperBleed * 2
+            readonly property int contentHeight: dockContent.dockContainer.height + extraTop + extraBottom + wrapperBleed * 2
 
-            // Add +2 buffer for fractional scaling issues
             width: contentWidth
             height: contentHeight
 

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 
 /**
@@ -43,7 +44,8 @@ Item {
   property int buttonHeight: 0
 
   // Edge snapping: if panel is within this distance (in pixels) from a screen edge, snap
-  property real edgeSnapDistance: 50
+  property real edgeSnapDistance: Math.max(16, Math.round(50 * Style.uiScaleRatio))
+  readonly property real geometryEpsilon: SurfaceRenderPolicy.epsilonForScreen(screen?.name)
 
   // Track whether panel is open
   property bool isPanelOpen: false
@@ -96,16 +98,25 @@ Item {
   // Expose panel region for background rendering
   readonly property var panelRegion: panelContent.geometryPlaceholder
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: barShouldShow ? Style.getBarHeightForScreen(screen?.name) : 0
-  readonly property bool hasBar: modelData && modelData.name ? (Settings.data.bar.monitors.includes(modelData.name) || (Settings.data.bar.monitors.length === 0)) : false
-  readonly property bool isFramed: Settings.data.bar.barType === "framed" && hasBar
-  readonly property real frameThickness: Settings.data.bar.frameThickness ?? 12
-  readonly property bool barFloating: Settings.data.bar.barType === "floating"
-  readonly property real barMarginH: (barFloating && barShouldShow) ? Math.ceil(Settings.data.bar.marginHorizontal) : 0
-  readonly property real barMarginV: (barFloating && barShouldShow) ? Math.ceil(Settings.data.bar.marginVertical) : 0
-  readonly property real attachmentOverlap: 1 // Panel extends into bar area to fix hairline gap with fractional scaling
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barIsVertical: barGeometryConfig.isVertical
+  readonly property real barHeight: barShouldShow ? barGeometryConfig.barHeight : 0
+  readonly property bool hasBar: {
+    var monitors = Settings.data.bar.monitors || [];
+    var screenName = screen?.name || "";
+    if (screenName === "")
+      return false;
+    return monitors.length === 0 || monitors.includes(screenName);
+  }
+  readonly property bool isFramed: barGeometryConfig.isFramed && hasBar
+  readonly property real frameThickness: barGeometryConfig.frameThickness
+  readonly property bool barFloating: barGeometryConfig.floating
+  readonly property real barMarginH: barShouldShow ? barGeometryConfig.marginHorizontal : 0
+  readonly property real barMarginV: barShouldShow ? barGeometryConfig.marginVertical : 0
+  // Legacy overlap no longer needed with crisp background rendering.
+  // Keep at 0 so attached panel/bar surfaces meet without double opacity stacking.
+  readonly property real attachmentOverlap: 0
 
   // Check if bar should be visible on this screen
   readonly property bool barShouldShow: {
@@ -811,17 +822,20 @@ Item {
       return result;
     }
 
+    readonly property real edgeEpsilon: root.geometryEpsilon
+    readonly property real frameEdgeInset: isFramed ? frameThickness : 0
+
     // Edge detection - detect if panel is touching screen edges
-    readonly property bool touchingLeftEdge: allowAttach && panelBackground.x <= (isFramed ? frameThickness + 1 : 1)
-    readonly property bool touchingRightEdge: allowAttach && (panelBackground.x + panelBackground.width) >= (root.width - (isFramed ? frameThickness + 1 : 1))
-    readonly property bool touchingTopEdge: allowAttach && panelBackground.y <= (isFramed ? frameThickness + 1 : 1)
-    readonly property bool touchingBottomEdge: allowAttach && (panelBackground.y + panelBackground.height) >= (root.height - (isFramed ? frameThickness + 1 : 1))
+    readonly property bool touchingLeftEdge: allowAttach && panelBackground.x <= (frameEdgeInset + edgeEpsilon)
+    readonly property bool touchingRightEdge: allowAttach && (panelBackground.x + panelBackground.width) >= (root.width - frameEdgeInset - edgeEpsilon)
+    readonly property bool touchingTopEdge: allowAttach && panelBackground.y <= (frameEdgeInset + edgeEpsilon)
+    readonly property bool touchingBottomEdge: allowAttach && (panelBackground.y + panelBackground.height) >= (root.height - frameEdgeInset - edgeEpsilon)
 
     // Bar edge detection - detect if panel is touching bar edges (for cases where centered panels snap to bar due to height constraints)
-    readonly property bool touchingTopBar: allowAttachToBar && root.barPosition === "top" && !root.barIsVertical && Math.abs(panelBackground.y - ((isFramed ? 0 : root.barMarginV) + root.barHeight)) <= 1
-    readonly property bool touchingBottomBar: allowAttachToBar && root.barPosition === "bottom" && !root.barIsVertical && Math.abs((panelBackground.y + panelBackground.height) - (root.height - (isFramed ? 0 : root.barMarginV) - root.barHeight)) <= 1
-    readonly property bool touchingLeftBar: allowAttachToBar && root.barPosition === "left" && root.barIsVertical && Math.abs(panelBackground.x - ((isFramed ? 0 : root.barMarginH) + root.barHeight)) <= 1
-    readonly property bool touchingRightBar: allowAttachToBar && root.barPosition === "right" && root.barIsVertical && Math.abs((panelBackground.x + panelBackground.width) - (root.width - (isFramed ? 0 : root.barMarginH) - root.barHeight)) <= 1
+    readonly property bool touchingTopBar: allowAttachToBar && root.barPosition === "top" && !root.barIsVertical && SurfaceRenderPolicy.nearlyEqual(panelBackground.y, ((isFramed ? 0 : root.barMarginV) + root.barHeight), root.screen?.name)
+    readonly property bool touchingBottomBar: allowAttachToBar && root.barPosition === "bottom" && !root.barIsVertical && SurfaceRenderPolicy.nearlyEqual((panelBackground.y + panelBackground.height), (root.height - (isFramed ? 0 : root.barMarginV) - root.barHeight), root.screen?.name)
+    readonly property bool touchingLeftBar: allowAttachToBar && root.barPosition === "left" && root.barIsVertical && SurfaceRenderPolicy.nearlyEqual(panelBackground.x, ((isFramed ? 0 : root.barMarginH) + root.barHeight), root.screen?.name)
+    readonly property bool touchingRightBar: allowAttachToBar && root.barPosition === "right" && root.barIsVertical && SurfaceRenderPolicy.nearlyEqual((panelBackground.x + panelBackground.width), (root.width - (isFramed ? 0 : root.barMarginH) - root.barHeight), root.screen?.name)
 
     // Expose panelBackground for geometry placeholder
     property alias geometryPlaceholder: panelBackground
@@ -850,30 +864,30 @@ Item {
         if (!panelContent.allowAttachToBar || root.barPosition !== "top" || root.barIsVertical)
           return false;
         var targetTopBarY = (isFramed ? 0 : root.barMarginV) + root.barHeight;
-        return Math.abs(panelBackground.targetY - targetTopBarY) <= 1;
+        return SurfaceRenderPolicy.nearlyEqual(panelBackground.targetY, targetTopBarY, root.screen?.name);
       }
       readonly property bool willTouchBottomBar: {
         if (!panelContent.allowAttachToBar || root.barPosition !== "bottom" || root.barIsVertical)
           return false;
         var targetBottomBarY = root.height - (isFramed ? 0 : root.barMarginV) - root.barHeight - panelBackground.targetHeight;
-        return Math.abs(panelBackground.targetY - targetBottomBarY) <= 1;
+        return SurfaceRenderPolicy.nearlyEqual(panelBackground.targetY, targetBottomBarY, root.screen?.name);
       }
       readonly property bool willTouchLeftBar: {
         if (!panelContent.allowAttachToBar || root.barPosition !== "left" || !root.barIsVertical)
           return false;
         var targetLeftBarX = (isFramed ? 0 : root.barMarginH) + root.barHeight;
-        return Math.abs(panelBackground.targetX - targetLeftBarX) <= 1;
+        return SurfaceRenderPolicy.nearlyEqual(panelBackground.targetX, targetLeftBarX, root.screen?.name);
       }
       readonly property bool willTouchRightBar: {
         if (!panelContent.allowAttachToBar || root.barPosition !== "right" || !root.barIsVertical)
           return false;
         var targetRightBarX = root.width - (isFramed ? 0 : root.barMarginH) - root.barHeight - panelBackground.targetWidth;
-        return Math.abs(panelBackground.targetX - targetRightBarX) <= 1;
+        return SurfaceRenderPolicy.nearlyEqual(panelBackground.targetX, targetRightBarX, root.screen?.name);
       }
-      readonly property bool willTouchTopEdge: panelContent.allowAttach && panelBackground.targetY <= (isFramed ? frameThickness + 1 : 1)
-      readonly property bool willTouchBottomEdge: panelContent.allowAttach && (panelBackground.targetY + panelBackground.targetHeight) >= (root.height - (isFramed ? frameThickness + 1 : 1))
-      readonly property bool willTouchLeftEdge: panelContent.allowAttach && panelBackground.targetX <= (isFramed ? frameThickness + 1 : 1)
-      readonly property bool willTouchRightEdge: panelContent.allowAttach && (panelBackground.targetX + panelBackground.targetWidth) >= (root.width - (isFramed ? frameThickness + 1 : 1))
+      readonly property bool willTouchTopEdge: panelContent.allowAttach && panelBackground.targetY <= (panelContent.frameEdgeInset + panelContent.edgeEpsilon)
+      readonly property bool willTouchBottomEdge: panelContent.allowAttach && (panelBackground.targetY + panelBackground.targetHeight) >= (root.height - panelContent.frameEdgeInset - panelContent.edgeEpsilon)
+      readonly property bool willTouchLeftEdge: panelContent.allowAttach && panelBackground.targetX <= (panelContent.frameEdgeInset + panelContent.edgeEpsilon)
+      readonly property bool willTouchRightEdge: panelContent.allowAttach && (panelBackground.targetX + panelBackground.targetWidth) >= (root.width - panelContent.frameEdgeInset - panelContent.edgeEpsilon)
 
       readonly property bool isActuallyAttachedToAnyEdge: {
         return willTouchTopBar || willTouchBottomBar || willTouchLeftBar || willTouchRightBar || willTouchTopEdge || willTouchBottomEdge || willTouchLeftEdge || willTouchRightEdge;

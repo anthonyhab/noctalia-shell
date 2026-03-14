@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 
 // Simple context menu PopupWindow (similar to TrayMenu)
 // Designed to be rendered inside a PopupMenuWindow for click-outside-to-close
@@ -27,8 +28,9 @@ PopupWindow {
   property real targetWidth: 0
   property real targetHeight: 0
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property real barHeight: barGeometryConfig.barHeight
 
   signal triggered(string action, var item)
 

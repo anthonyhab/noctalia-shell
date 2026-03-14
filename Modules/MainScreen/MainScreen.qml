@@ -135,10 +135,11 @@ PanelWindow {
     Region {
       id: barMaskRegion
 
-      readonly property bool isFramed: Settings.data.bar.barType === "framed"
-      readonly property real barThickness: Style.barHeight
-      readonly property real frameThickness: Settings.data.bar.frameThickness ?? 12
-      readonly property string barPos: Settings.data.bar.position || "top"
+      readonly property var barGeometryConfig: Backgrounds.ShellGeometryPolicy.barConfig(root.screen?.name)
+      readonly property bool isFramed: barGeometryConfig.isFramed
+      readonly property real barThickness: barGeometryConfig.barHeight
+      readonly property real frameThickness: barGeometryConfig.frameThickness
+      readonly property string barPos: barGeometryConfig.position
 
       // Bar / Frame Mask
       Region {
@@ -435,14 +436,17 @@ PanelWindow {
       property ShellScreen screen: root.screen
 
       // Bar background positioning properties (per-screen)
-      readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-      readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-      readonly property bool isFramed: Settings.data.bar.barType === "framed"
-      readonly property real frameThickness: Settings.data.bar.frameThickness ?? 12
-      readonly property bool barFloating: Settings.data.bar.barType === "floating"
-      readonly property real barMarginH: barFloating ? Math.floor(Settings.data.bar.marginHorizontal) : 0
-      readonly property real barMarginV: barFloating ? Math.floor(Settings.data.bar.marginVertical) : 0
-      readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
+      readonly property var barGeometryConfig: Backgrounds.ShellGeometryPolicy.barConfig(screen?.name)
+      readonly property string barPosition: barGeometryConfig.position
+      readonly property bool barIsVertical: barGeometryConfig.isVertical
+      readonly property bool isFramed: barGeometryConfig.isFramed
+      readonly property real frameThickness: barGeometryConfig.frameThickness
+      readonly property bool barFloating: barGeometryConfig.floating
+      readonly property real barMarginH: barGeometryConfig.marginHorizontal
+      readonly property real barMarginV: barGeometryConfig.marginVertical
+      readonly property real barHeight: barGeometryConfig.barHeight
+      readonly property var barRect: Backgrounds.ShellGeometryPolicy.barVisualRect(screen)
+      readonly property var barCornerStates: Backgrounds.ShellGeometryPolicy.barCornerStates(screen?.name)
 
       // Auto-hide properties (read by AllBackgrounds for background fade)
       readonly property bool autoHide: Settings.getBarDisplayModeForScreen(screen?.name) === "auto_hide"
@@ -458,90 +462,15 @@ PanelWindow {
       }
 
       // Expose bar dimensions directly on this Item for BarBackground
-      // Use screen dimensions directly
-      x: {
-        if (barPosition === "right")
-          return (screen?.width ?? 0) - barHeight - barMarginH;
-        if (isFramed && !barIsVertical)
-          return frameThickness;
-        return barMarginH;
-      }
-      y: {
-        if (barPosition === "bottom")
-          return (screen?.height ?? 0) - barHeight - barMarginV;
-        if (isFramed && barIsVertical)
-          return frameThickness;
-        return barMarginV;
-      }
-      width: {
-        if (barIsVertical) {
-          return barHeight;
-        }
-        if (isFramed)
-          return (screen?.width ?? 0) - frameThickness * 2;
-        return (screen?.width ?? 0) - barMarginH * 2;
-      }
-      height: {
-        if (!barIsVertical) {
-          return barHeight;
-        }
-        if (isFramed)
-          return (screen?.height ?? 0) - frameThickness * 2;
-        return (screen?.height ?? 0) - barMarginV * 2;
-      }
+      x: barRect.x
+      y: barRect.y
+      width: barRect.width
+      height: barRect.height
 
-      // Corner states (same as Bar.qml)
-      readonly property int topLeftCornerState: {
-        if (barFloating)
-          return 0;
-        if (barPosition === "top")
-          return -1;
-        if (barPosition === "left")
-          return -1;
-        if (Settings.data.bar.outerCorners && (barPosition === "bottom" || barPosition === "right")) {
-          return barIsVertical ? 1 : 2;
-        }
-        return -1;
-      }
-
-      readonly property int topRightCornerState: {
-        if (barFloating)
-          return 0;
-        if (barPosition === "top")
-          return -1;
-        if (barPosition === "right")
-          return -1;
-        if (Settings.data.bar.outerCorners && (barPosition === "bottom" || barPosition === "left")) {
-          return barIsVertical ? 1 : 2;
-        }
-        return -1;
-      }
-
-      readonly property int bottomLeftCornerState: {
-        if (barFloating)
-          return 0;
-        if (barPosition === "bottom")
-          return -1;
-        if (barPosition === "left")
-          return -1;
-        if (Settings.data.bar.outerCorners && (barPosition === "top" || barPosition === "right")) {
-          return barIsVertical ? 1 : 2;
-        }
-        return -1;
-      }
-
-      readonly property int bottomRightCornerState: {
-        if (barFloating)
-          return 0;
-        if (barPosition === "bottom")
-          return -1;
-        if (barPosition === "right")
-          return -1;
-        if (Settings.data.bar.outerCorners && (barPosition === "top" || barPosition === "left")) {
-          return barIsVertical ? 1 : 2;
-        }
-        return -1;
-      }
+      readonly property int topLeftCornerState: barCornerStates.topLeft
+      readonly property int topRightCornerState: barCornerStates.topRight
+      readonly property int bottomLeftCornerState: barCornerStates.bottomLeft
+      readonly property int bottomRightCornerState: barCornerStates.bottomRight
     }
 
     // Screen Corners

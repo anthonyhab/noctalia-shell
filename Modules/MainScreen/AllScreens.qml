@@ -4,6 +4,7 @@ import Quickshell.Wayland
 
 import qs.Commons
 import qs.Modules.MainScreen
+import qs.Modules.MainScreen.Backgrounds as Backgrounds
 import qs.Services.UI
 
 // ------------------------------
@@ -109,7 +110,7 @@ Variants {
     // windows from moving into the bar area. Auto-hide is handled by the component
     // itself via ExclusionMode.Ignore/Auto.
     Repeater {
-      model: Settings.data.bar.barType === "framed" ? ["top", "bottom", "left", "right"] : [Settings.getBarPositionForScreen(windowItem.modelData?.name)]
+      model: Settings.data.bar.barType === "framed" ? ["top", "bottom", "left", "right"] : [Backgrounds.ShellGeometryPolicy.barConfig(windowItem.modelData?.name).position]
       delegate: Loader {
         active: {
           if (!windowItem.windowLoaded || !windowItem.shouldBeActive)

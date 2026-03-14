@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Modules.Panels.Settings
 import qs.Services.Compositor
 import qs.Services.Noctalia
@@ -356,21 +357,15 @@ Variants {
           id: editModeControlsPanel
           visible: DesktopWidgetRegistry.editMode && Settings.data.desktopWidgets.enabled
 
-          readonly property string barPos: Settings.getBarPositionForScreen(window.screen?.name)
-          readonly property bool barFloating: Settings.data.bar.barType === "floating"
-          readonly property real barHeight: Style.getBarHeightForScreen(window.screen?.name)
+          readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(window.screen?.name)
+          readonly property var barInsets: ShellGeometryPolicy.barAvoidanceInsets(window.screen?.name)
+          readonly property string barPos: barGeometryConfig.position
 
           readonly property int barOffsetTop: {
-            if (barPos !== "top")
-              return Style.marginM;
-            const floatMarginV = barFloating ? Math.ceil(Settings.data.bar.marginVertical) : 0;
-            return barHeight + floatMarginV + Style.marginM;
+            return Style.marginM + (barPos === "top" ? barInsets.top : 0);
           }
           readonly property int barOffsetRight: {
-            if (barPos !== "right")
-              return Style.marginM;
-            const floatMarginH = barFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0;
-            return barHeight + floatMarginH + Style.marginM;
+            return Style.marginM + (barPos === "right" ? barInsets.right : 0);
           }
 
           // Internal state for drag tracking (session-only, resets on restart)

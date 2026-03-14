@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 
 /**
@@ -13,8 +14,9 @@ import qs.Services.UI
 PanelWindow {
   id: root
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barIsVertical: barGeometryConfig.isVertical
   readonly property int triggerSize: 1
 
   // Track if component is being destroyed to prevent signals during cleanup

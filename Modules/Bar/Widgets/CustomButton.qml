@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Modules.Panels.Settings
 import qs.Services.Control
 import qs.Services.UI
@@ -33,8 +34,9 @@ Item {
     return {};
   }
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVerticalBar: barGeometryConfig.isVertical
 
   readonly property string customIcon: widgetSettings.icon || widgetMetadata.icon
   readonly property string leftClickExec: widgetSettings.leftClickExec || widgetMetadata.leftClickExec

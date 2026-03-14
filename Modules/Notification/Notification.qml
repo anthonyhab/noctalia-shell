@@ -6,6 +6,7 @@ import Quickshell.Services.Notifications
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.System
 import qs.Widgets
 
@@ -95,45 +96,11 @@ Variants {
       readonly property bool isRight: location.endsWith("_right")
       readonly property bool isCentered: location === "top" || location === "bottom"
 
-      readonly property string barPos: Settings.getBarPositionForScreen(notifWindow.screen?.name)
-      readonly property bool isFloating: Settings.data.bar.barType === "floating"
-      readonly property real barHeight: Style.getBarHeightForScreen(notifWindow.screen?.name)
-
-      readonly property bool isFramed: Settings.data.bar.barType === "framed"
-      readonly property real frameThickness: Settings.data.bar.frameThickness ?? 8
+      readonly property var barInsets: ShellGeometryPolicy.barAvoidanceInsets(notifWindow.screen?.name)
 
       readonly property bool isCompact: Settings.data.notifications.density === "compact"
       readonly property int notifWidth: Math.round((isCompact ? 320 : 440) * Style.uiScaleRatio)
       readonly property int shadowPadding: Style.shadowBlurMax + Style.marginL
-
-      // Calculate bar and frame offsets for each edge separately
-      readonly property int barOffsetTop: {
-        if (barPos !== "top")
-          return isFramed ? frameThickness : 0;
-        const floatMarginV = isFloating ? Math.ceil(Settings.data.bar.marginVertical) : 0;
-        return barHeight + floatMarginV;
-      }
-
-      readonly property int barOffsetBottom: {
-        if (barPos !== "bottom")
-          return isFramed ? frameThickness : 0;
-        const floatMarginV = isFloating ? Math.ceil(Settings.data.bar.marginVertical) : 0;
-        return barHeight + floatMarginV;
-      }
-
-      readonly property int barOffsetLeft: {
-        if (barPos !== "left")
-          return isFramed ? frameThickness : 0;
-        const floatMarginH = isFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0;
-        return barHeight + floatMarginH;
-      }
-
-      readonly property int barOffsetRight: {
-        if (barPos !== "right")
-          return isFramed ? frameThickness : 0;
-        const floatMarginH = isFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0;
-        return barHeight + floatMarginH;
-      }
 
       // Anchoring
       anchors.top: isTop
@@ -142,10 +109,10 @@ Variants {
       anchors.right: isRight
 
       // Margins for PanelWindow - only apply bar offset for the specific edge where the bar is
-      margins.top: isTop ? barOffsetTop - shadowPadding + Style.marginM : 0
-      margins.bottom: isBottom ? barOffsetBottom - shadowPadding : 0
-      margins.left: isLeft ? barOffsetLeft - shadowPadding + Style.marginM : 0
-      margins.right: isRight ? barOffsetRight - shadowPadding + Style.marginM : 0
+      margins.top: isTop ? barInsets.top - shadowPadding + Style.marginM : 0
+      margins.bottom: isBottom ? barInsets.bottom - shadowPadding : 0
+      margins.left: isLeft ? barInsets.left - shadowPadding + Style.marginM : 0
+      margins.right: isRight ? barInsets.right - shadowPadding + Style.marginM : 0
 
       implicitWidth: notifWidth + shadowPadding * 2
       implicitHeight: notificationStack.implicitHeight + Style.marginL

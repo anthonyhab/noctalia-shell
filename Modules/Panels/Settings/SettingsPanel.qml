@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Modules.MainScreen
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 import qs.Widgets
 
@@ -19,10 +20,11 @@ SmartPanel {
   readonly property bool attachToBar: settingsPanelMode === "attached"
 
   readonly property string barDensity: Settings.data.bar.density
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property bool barFloating: Settings.data.bar.barType === "floating"
-  readonly property real barMarginH: barFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0
-  readonly property real barMarginV: barFloating ? Math.ceil(Settings.data.bar.marginVertical) : 0
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barFloating: barGeometryConfig.floating
+  readonly property real barMarginH: barGeometryConfig.marginHorizontal
+  readonly property real barMarginV: barGeometryConfig.marginVertical
 
   forceAttachToBar: attachToBar
   panelAnchorHorizontalCenter: !root.useButtonPosition && (attachToBar ? (barPosition === "top" || barPosition === "bottom") : true)

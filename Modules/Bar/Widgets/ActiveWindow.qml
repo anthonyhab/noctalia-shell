@@ -6,14 +6,15 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Compositor
 import qs.Services.UI
 import qs.Widgets
 
 Item {
   id: root
-  Layout.preferredHeight: isVerticalBar ? -1 : Style.getBarHeightForScreen(screenName)
-  Layout.preferredWidth: isVerticalBar ? Style.getBarHeightForScreen(screenName) : -1
+  Layout.preferredHeight: isVerticalBar ? -1 : barGeometryConfig.barHeight
+  Layout.preferredWidth: isVerticalBar ? barGeometryConfig.barHeight : -1
   Layout.fillHeight: false
   Layout.fillWidth: false
 
@@ -49,16 +50,17 @@ Item {
   readonly property string textColorKey: (widgetSettings.textColor !== undefined) ? widgetSettings.textColor : widgetMetadata.textColor
   readonly property color textColor: Color.resolveColorKey(textColorKey)
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVerticalBar: barGeometryConfig.isVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
   readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
   readonly property bool hasFocusedWindow: CompositorService.getFocusedWindow() !== null
   readonly property string windowTitle: CompositorService.getFocusedWindowTitle() || "No active window"
   readonly property string fallbackIcon: "user-desktop"
 
-  readonly property int iconSize: Style.toOdd(capsuleHeight * 0.75)
+  readonly property int iconSize: Style.toOdd(capsuleHeight * 0.75 * Style.iconScaleRatio)
   readonly property int verticalSize: Style.toOdd(capsuleHeight * 0.85)
 
   // For horizontal bars, height is always barHeight (no animation needed)

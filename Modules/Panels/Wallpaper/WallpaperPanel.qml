@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Modules.MainScreen
+import qs.Modules.MainScreen.Backgrounds
 import qs.Modules.Panels.Settings
 import qs.Services.Theming
 import qs.Services.UI
@@ -18,7 +19,8 @@ SmartPanel {
   preferredHeightRatio: 0.7
 
   // Positioning
-  readonly property string screenBarPosition: Settings.getBarPositionForScreen(screen?.name)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string screenBarPosition: barGeometryConfig.position
   readonly property string panelPosition: {
     if (Settings.data.wallpaper.panelPosition === "follow_bar") {
       if (screenBarPosition === "left" || screenBarPosition === "right") {

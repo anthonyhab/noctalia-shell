@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Networking
 import qs.Services.UI
 import qs.Widgets
@@ -30,8 +31,9 @@ Item {
     return {};
   }
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isBarVertical: barGeometryConfig.isVertical
   readonly property string displayMode: widgetSettings.displayMode !== undefined ? widgetSettings.displayMode : widgetMetadata.displayMode
   readonly property string iconColorKey: widgetSettings.iconColor !== undefined ? widgetSettings.iconColor : widgetMetadata.iconColor
   readonly property string textColorKey: widgetSettings.textColor !== undefined ? widgetSettings.textColor : widgetMetadata.textColor

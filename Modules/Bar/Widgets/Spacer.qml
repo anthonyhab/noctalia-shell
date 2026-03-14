@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 import qs.Widgets
 
@@ -29,9 +30,10 @@ Item {
     return {};
   }
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isBarVertical: barGeometryConfig.isVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
   readonly property int spacerSize: widgetSettings.width !== undefined ? widgetSettings.width : widgetMetadata.width
 
   implicitWidth: isBarVertical ? barHeight : spacerSize
