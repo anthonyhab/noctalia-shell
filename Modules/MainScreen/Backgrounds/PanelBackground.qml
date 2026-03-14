@@ -21,6 +21,8 @@ ShapePath {
 
   // Dynamically assigned panel (null if slot is unused)
   property var assignedPanel: null
+  // Allows caller to route rendering to Rectangle fast path.
+  property bool disabled: false
 
   // Required reference to AllBackgrounds shapeContainer
   required property var shapeContainer
@@ -36,7 +38,7 @@ ShapePath {
 
   // Get the actual panelBackground Item from panelRegion
   // Only access panelItem if panelRegion exists and is visible
-  readonly property var panelBg: (panelRegion && panelRegion.visible) ? panelRegion.panelItem : null
+  readonly property var panelBg: (!disabled && panelRegion && panelRegion.visible) ? panelRegion.panelItem : null
 
   // Effective background color: use panel's if defined, else default
   readonly property color effectiveBackgroundColor: {
@@ -92,14 +94,11 @@ ShapePath {
 
   // ShapePath configuration
   strokeWidth: -1 // No stroke, fill only
+  fillColor: (disabled || !assignedPanel || !panelBg || panelWidth <= 0 || panelHeight <= 0) ? "transparent" : effectiveBackgroundColor
 
-  // Start point - use tiny off-screen non-degenerate fallback when not renderable.
-  // Fallback forms a 1×1 off-screen square where each edge is split between a PathLine
-  // and a PathArc, ensuring no arc has zero displacement (which can crash qTriangulate).
-  startX: isRenderable ? (panelX + tlRadius * tlMultX) : -0.75
-  startY: isRenderable ? panelY : -1
-
-  fillColor: isRenderable ? effectiveBackgroundColor : "transparent"
+  // Starting position (top-left corner, after the arc)
+  startX: disabled ? 0 : panelX + tlRadius * tlMultX
+  startY: disabled ? 0 : panelY
 
   // ========== PATH DEFINITION ==========
   // Draws a rectangle with potentially inverted corners

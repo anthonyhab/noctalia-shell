@@ -29,9 +29,13 @@ ShapePath {
   required property var windowRoot
 
   required property color backgroundColor
+  // Allow caller to disable this path when a simpler primitive is used.
+  property bool disabled: false
 
   // Check if bar should be visible on this screen
   readonly property bool shouldShow: {
+    if (disabled)
+      return false;
     // Check global bar visibility (includes overview state)
     if (!BarService.effectivelyVisible)
       return false;
@@ -49,8 +53,9 @@ ShapePath {
   readonly property real radius: Style.radiusL
 
   // Framed bar properties
-  readonly property bool isFramed: Settings.data.bar.barType === "framed"
-  readonly property real frameThickness: Settings.data.bar.frameThickness ?? 12
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(windowRoot?.screen?.name)
+  readonly property bool isFramed: barGeometryConfig.isFramed
+  readonly property real frameThickness: barGeometryConfig.frameThickness
   readonly property real frameRadius: Settings.data.bar.frameRadius ?? 20
 
   // Bar position - since bar's parent fills the screen and Shape also fills the screen,
@@ -66,8 +71,8 @@ ShapePath {
   readonly property real screenHeight: windowRoot?.screen?.height || 0
 
   // Inner hole dimensions for framed mode - always relative to screen
-  readonly property string barPosition: Settings.getBarPositionForScreen(windowRoot?.screen?.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barIsVertical: barGeometryConfig.isVertical
   readonly property real holeX: (barPosition === "left") ? barWidth : frameThickness
   readonly property real holeY: (barPosition === "top") ? barHeight : frameThickness
   readonly property real holeWidth: screenWidth - (barPosition === "left" || barPosition === "right" ? (barWidth + frameThickness) : (frameThickness * 2))
@@ -134,7 +139,7 @@ ShapePath {
 
   // ShapePath configuration
   strokeWidth: -1 // No stroke, fill only
-  fillColor: isRenderable ? Qt.rgba(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a * opacityFactor) : "transparent"
+  fillColor: (!shouldShow || disabled) ? "transparent" : Qt.rgba(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a * opacityFactor)
   fillRule: isFramed ? ShapePath.OddEvenFill : ShapePath.WindingFill
 
   // Starting position — falls back to off-screen when not renderable so that
