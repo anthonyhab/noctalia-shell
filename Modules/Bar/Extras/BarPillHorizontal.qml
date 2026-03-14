@@ -167,7 +167,7 @@ Item {
     id: iconCircle
     width: hasIcon ? pillHeight : 0
     height: pillHeight
-    radius: Math.min(Style.radiusL, width / 2)
+    radius: Math.min(Style.radiusM, width / 2)
     color: "transparent" // Make icon background transparent to avoid double opacity
     anchors.verticalCenter: parent.verticalCenter
 

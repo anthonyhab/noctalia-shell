@@ -23,6 +23,9 @@ Slider {
   readonly property real trackRadius: Math.min(Style.iRadiusL, trackWidth / 2)
   readonly property real cutoutExtra: Math.round((Style.baseWidgetSize * 0.1 * Style.uiScaleRatio) / 2) * 2
 
+  readonly property real knobCutoutRadius: Math.min(Style.iRadiusL, (knobDiameter + cutoutExtra) / 2)
+  readonly property real knobRadius: Style.nestedRadius(knobCutoutRadius, cutoutExtra / 2)
+
   orientation: Qt.Vertical
 
   padding: cutoutExtra / 2
@@ -158,10 +161,15 @@ Slider {
       id: knobCutout
       implicitWidth: root.knobDiameter + root.cutoutExtra
       implicitHeight: root.knobDiameter + root.cutoutExtra
-      radius: Math.min(Style.iRadiusL, width / 2)
+      radius: root.knobCutoutRadius
       color: root.cutoutColor !== undefined ? root.cutoutColor : Color.mSurface
       y: root.visualPosition * (root.availableHeight - root.knobDiameter) - root.cutoutExtra / 2
       anchors.horizontalCenter: parent.horizontalCenter
+
+      scale: root.pressed ? 0.95 : (root.hovering ? 1.05 : 1.0)
+      Behavior on scale {
+        NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+      }
     }
   }
 
@@ -171,35 +179,51 @@ Slider {
     y: root.topPadding + root.visualPosition * (root.availableHeight - height)
     anchors.horizontalCenter: parent.horizontalCenter
 
+    scale: root.pressed ? 0.95 : (root.hovering ? 1.05 : 1.0)
+    Behavior on scale {
+      NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+    }
+
     Rectangle {
-      id: knob
-      implicitWidth: root.knobDiameter
-      implicitHeight: root.knobDiameter
-      radius: Math.min(Style.iRadiusL, width / 2)
-      color: {
-        if (root.rainbowMode) {
-          // Hue Logic: Map position (0.0 to 1.0) directly to Hue
-          return Qt.hsva(1 - root.visualPosition, 1, 1, 1);
-        } else {
-          // Linear Interpolation for Standard Gradients
-          // visualPosition 0.0 = Top, 1.0 = Bottom
-          var t = root.visualPosition;
-          var r = root.topColor.r * (1 - t) + root.bottomColor.r * t;
-          var g = root.topColor.g * (1 - t) + root.bottomColor.g * t;
-          var b = root.topColor.b * (1 - t) + root.bottomColor.b * t;
-          return Qt.rgba(r, g, b, 1);
+      id: knobBorder
+      anchors.fill: parent
+      radius: root.knobRadius
+      color: root.pressed ? Color.mHover : Color.mPrimary
+
+      Rectangle {
+        anchors.fill: parent
+        anchors.margins: Style.borderL
+        radius: Style.nestedRadius(parent.radius, Style.borderL)
+        color: {
+          if (root.rainbowMode) {
+            // Hue Logic: Map position (0.0 to 1.0) directly to Hue
+            return Qt.hsva(1 - root.visualPosition, 1, 1, 1);
+          } else {
+            // Linear Interpolation for Standard Gradients
+            // visualPosition 0.0 = Top, 1.0 = Bottom
+            var t = root.visualPosition;
+            var r = root.topColor.r * (1 - t) + root.bottomColor.r * t;
+            var g = root.topColor.g * (1 - t) + root.bottomColor.g * t;
+            var b = root.topColor.b * (1 - t) + root.bottomColor.b * t;
+            return Qt.rgba(r, g, b, 1);
+          }
+        }
+
+        Behavior on color {
+          ColorAnimation {
+            duration: Style.animationFast
+          }
         }
       }
+    }
 
-      border.color: root.pressed ? Color.mHover : Color.mPrimary
-      border.width: Style.borderL
-      anchors.centerIn: parent
-
-      Behavior on color {
-        ColorAnimation {
-          duration: Style.animationFast
-        }
-      }
+    NDropShadow {
+      source: knobBorder
+      anchors.fill: knobBorder
+      shadowBlur: 0.5
+      shadowOpacity: 0.3
+      shadowVerticalOffset: 1
+      shadowHorizontalOffset: 0
     }
 
     MouseArea {
@@ -212,8 +236,8 @@ Slider {
 
       onEntered: {
         root.hovering = true;
-        if (root.tooltipText && (!Array.isArray(root.tooltipText) || root.tooltipText.length > 0)) {
-          TooltipService.show(knob, root.tooltipText, root.tooltipDirection);
+        if (root.tooltipText) {
+          TooltipService.show(knobBorder, root.tooltipText, root.tooltipDirection);
         }
       }
 

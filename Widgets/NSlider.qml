@@ -21,6 +21,8 @@ Slider {
   readonly property real trackHeight: Math.round((knobDiameter * 0.4 * Style.uiScaleRatio) / 2) * 2
   readonly property real trackRadius: Math.min(Style.iRadiusL, trackHeight / 2)
   readonly property real cutoutExtra: Math.round((Style.baseWidgetSize * 0.1 * Style.uiScaleRatio) / 2) * 2
+  readonly property real knobCutoutRadius: Math.min(Style.iRadiusL, (knobDiameter + cutoutExtra) / 2)
+  readonly property real knobRadius: Style.nestedRadius(knobCutoutRadius, cutoutExtra / 2)
 
   padding: cutoutExtra / 2
 
@@ -186,10 +188,15 @@ Slider {
       id: knobCutout
       implicitWidth: root.knobDiameter + root.cutoutExtra
       implicitHeight: root.knobDiameter + root.cutoutExtra
-      radius: Math.min(Style.iRadiusL, width / 2)
+      radius: root.knobCutoutRadius
       color: root.cutoutColor !== undefined ? root.cutoutColor : Color.mSurface
       x: root.visualPosition * (root.availableWidth - root.knobDiameter) - root.cutoutExtra / 2
       anchors.verticalCenter: parent.verticalCenter
+
+      scale: root.pressed ? 0.95 : (root.hovering ? 1.05 : 1.0)
+      Behavior on scale {
+        NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+      }
     }
   }
 
@@ -199,21 +206,38 @@ Slider {
     x: root.leftPadding + root.visualPosition * (root.availableWidth - width)
     anchors.verticalCenter: parent.verticalCenter
 
-    Rectangle {
-      id: knob
-      implicitWidth: knobDiameter
-      implicitHeight: knobDiameter
-      radius: Math.min(Style.iRadiusL, width / 2)
-      color: root.pressed ? Color.mHover : Color.mSurface
-      border.color: effectiveFillColor
-      border.width: Style.borderL
-      anchors.centerIn: parent
+    scale: root.pressed ? 0.95 : (root.hovering ? 1.05 : 1.0)
+    Behavior on scale {
+      NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+    }
 
-      Behavior on color {
-        ColorAnimation {
-          duration: Style.animationFast
+    Rectangle {
+      id: knobBorder
+      anchors.fill: parent
+      radius: root.knobRadius
+      color: effectiveFillColor
+
+      Rectangle {
+        anchors.fill: parent
+        anchors.margins: Style.borderL
+        radius: Style.nestedRadius(parent.radius, Style.borderL)
+        color: root.pressed ? Color.mHover : Color.mSurface
+
+        Behavior on color {
+          ColorAnimation {
+            duration: Style.animationFast
+          }
         }
       }
+    }
+
+    NDropShadow {
+      source: knobBorder
+      anchors.fill: knobBorder
+      shadowBlur: 0.5
+      shadowOpacity: 0.3
+      shadowVerticalOffset: 1
+      shadowHorizontalOffset: 0
     }
 
     MouseArea {
@@ -226,8 +250,8 @@ Slider {
 
       onEntered: {
         root.hovering = true;
-        if (root.tooltipText && (!Array.isArray(root.tooltipText) || root.tooltipText.length > 0)) {
-          TooltipService.show(knob, root.tooltipText, root.tooltipDirection);
+        if (root.tooltipText) {
+          TooltipService.show(knobBorder, root.tooltipText, root.tooltipDirection);
         }
       }
 

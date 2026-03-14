@@ -59,7 +59,7 @@ NIconButton {
   tooltipDirection: BarService.getTooltipDirection(screen?.name)
   baseSize: Style.getCapsuleHeightForScreen(screen?.name)
   applyUiScale: false
-  customRadius: Style.radiusL
+  customRadius: Style.radiusM
   colorBg: Style.capsuleColor
   colorFg: iconColor
   colorBgHover: Color.mHover
@@ -121,7 +121,7 @@ NIconButton {
   IconImage {
     id: customOrDistroLogo
     anchors.centerIn: parent
-    width: root.buttonSize * 0.8
+    width: root.buttonSize * 0.8 * Style.iconScaleRatio
     height: width
     source: {
       if (useDistroLogo)

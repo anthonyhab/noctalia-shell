@@ -215,19 +215,36 @@ Variants {
           return 0;
         }
 
-        // Background with inverted corners - extends beyond panel for inverted corners
+        readonly property real panelRadius: SurfaceRenderPolicy.effectiveRadiusForSize(Style.radiusL, width, height)
+        readonly property bool useRectBackground: SurfaceRenderPolicy.canUseRectPath(
+              topLeftCornerState,
+              topRightCornerState,
+              bottomLeftCornerState,
+              bottomRightCornerState,
+              false)
+        readonly property bool useShapeBackground: !useRectBackground
+
+        Rectangle {
+          anchors.fill: parent
+          visible: launcherPanel.useRectBackground
+          color: Color.mSurfaceVariant
+          radius: launcherPanel.panelRadius
+          antialiasing: false
+        }
+
+        // Background with inverted corners - extends beyond panel for inverted corners.
         Shape {
           id: panelShape
+          visible: launcherPanel.useShapeBackground
           // Extend shape to allow inverted corners to render outside panel bounds
-          x: -radius
-          y: -radius
-          width: launcherPanel.width + radius * 2
-          height: launcherPanel.height + radius * 2
-          visible: panelW > 0 && panelH > 0
+          x: -launcherPanel.panelRadius
+          y: -launcherPanel.panelRadius
+          width: launcherPanel.width + launcherPanel.panelRadius * 2
+          height: launcherPanel.height + launcherPanel.panelRadius * 2
           opacity: launcherPanel.opacity
-          layer.enabled: true
+          layer.enabled: false
 
-          readonly property real radius: Style.radiusL
+          readonly property real radius: launcherPanel.panelRadius
 
           // Panel dimensions (for path calculations)
           readonly property real panelW: launcherPanel.width
@@ -323,7 +340,7 @@ Variants {
           radius: Style.radiusL
           border.color: Style.boxBorderColor
           border.width: Style.borderS
-          visible: !launcherPanel.touchingLeft && !launcherPanel.touchingRight && !launcherPanel.touchingTop && !launcherPanel.touchingBottom
+          visible: launcherPanel.useRectBackground && !launcherPanel.touchingLeft && !launcherPanel.touchingRight && !launcherPanel.touchingTop && !launcherPanel.touchingBottom
         }
 
         LauncherCore {

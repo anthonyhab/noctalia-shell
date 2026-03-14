@@ -49,7 +49,7 @@ NIconButton {
   tooltipDirection: BarService.getTooltipDirection(screenName)
   baseSize: Style.getCapsuleHeightForScreen(screenName)
   applyUiScale: false
-  customRadius: Style.radiusL
+  customRadius: Style.radiusM
   colorBg: Style.capsuleColor
   colorFg: iconColor
   colorBgHover: Color.mHover

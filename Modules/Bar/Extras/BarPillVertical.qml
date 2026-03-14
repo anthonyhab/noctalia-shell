@@ -186,7 +186,7 @@ Item {
     id: iconCircle
     width: buttonSize
     height: buttonSize
-    radius: Math.min(Style.radiusL, width / 2)
+    radius: Math.min(Style.radiusM, width / 2)
     color: "transparent" // Make icon background transparent to avoid double opacity
 
     // Icon positioning based on direction
