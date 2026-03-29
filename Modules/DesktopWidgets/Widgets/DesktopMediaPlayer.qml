@@ -91,7 +91,7 @@ DraggableDesktopWidget {
         sourceItem: Rectangle {
           width: root.width - Math.round(Style.marginXS * widgetScale) * 2
           height: root.height - Math.round(Style.marginXS * widgetScale)
-          radius: root.roundedCorners ? Math.round(Math.max(0, (Style.radiusL - Style.marginXS) * widgetScale)) : 0
+          radius: root.roundedCorners ? Math.round(Style.nestedRadius(Style.radiusL, Style.marginXS) * widgetScale) : 0
           color: "white"
         }
       }

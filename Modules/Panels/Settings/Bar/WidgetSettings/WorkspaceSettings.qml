@@ -9,11 +9,8 @@ ColumnLayout {
   spacing: Style.marginM
 
   // Properties to receive data from parent
-  property var screen: null
   property var widgetData: null
   property var widgetMetadata: null
-
-  signal settingsChanged(var settings)
 
   property string valueLabelMode: widgetData.labelMode !== undefined ? widgetData.labelMode : widgetMetadata.labelMode
   property bool valueHideUnoccupied: widgetData.hideUnoccupied !== undefined ? widgetData.hideUnoccupied : widgetMetadata.hideUnoccupied
@@ -35,6 +32,17 @@ ColumnLayout {
   property bool valueShowBadge: widgetData.showBadge !== undefined ? widgetData.showBadge : widgetMetadata.showBadge
   property real valuePillSize: widgetData.pillSize !== undefined ? widgetData.pillSize : widgetMetadata.pillSize
   property string valueFontWeight: widgetData.fontWeight !== undefined ? widgetData.fontWeight : widgetMetadata.fontWeight
+  property string valueActiveIndicatorStyle: widgetData.activeIndicatorStyle !== undefined ? widgetData.activeIndicatorStyle : widgetMetadata.activeIndicatorStyle
+
+  function trOrDefault(key, fallbackText) {
+    var translated = I18n.tr(key);
+    if (translated === undefined || translated === null)
+      return fallbackText;
+    if (typeof translated === "string" && translated.length >= 4 && translated.slice(0, 2) === "!!" && translated.slice(-2) === "!!") {
+      return fallbackText;
+    }
+    return translated;
+  }
 
   function saveSettings() {
     var settings = Object.assign({}, widgetData || {});
@@ -56,137 +64,73 @@ ColumnLayout {
     settings.showBadge = valueShowBadge;
     settings.pillSize = valuePillSize;
     settings.fontWeight = valueFontWeight;
-    settingsChanged(settings);
+    settings.activeIndicatorStyle = valueActiveIndicatorStyle;
+    return settings;
   }
 
   NComboBox {
     id: labelModeCombo
-    label: I18n.tr("bar.workspace.label-mode-label")
-    description: I18n.tr("bar.workspace.label-mode-description")
+    label: root.trOrDefault("bar.workspace.label-mode-label", "Label mode")
+    description: root.trOrDefault("bar.workspace.label-mode-description", "Choose how workspace labels are displayed.")
     model: [
       {
         "key": "none",
-        "name": I18n.tr("common.none")
+        "name": root.trOrDefault("common.none", "None")
       },
       {
         "key": "index",
-        "name": I18n.tr("options.workspace-labels.index")
+        "name": root.trOrDefault("options.workspace-labels.index", "Index")
       },
       {
         "key": "name",
-        "name": I18n.tr("options.workspace-labels.name")
+        "name": root.trOrDefault("options.workspace-labels.name", "Name")
       },
       {
         "key": "index+name",
-        "name": I18n.tr("options.workspace-labels.index-and-name")
+        "name": root.trOrDefault("options.workspace-labels.index-and-name", "Index + name")
       }
     ]
     currentKey: widgetData.labelMode || widgetMetadata.labelMode
-    onSelected: key => {
-                  valueLabelMode = key;
-                  saveSettings();
-                }
+    onSelected: key => valueLabelMode = key
     minimumWidth: 200
   }
 
   NSpinBox {
-    label: I18n.tr("bar.workspace.character-count-label")
-    description: I18n.tr("bar.workspace.character-count-description")
+    label: root.trOrDefault("bar.workspace.character-count-label", "Character count")
+    description: root.trOrDefault("bar.workspace.character-count-description", "Number of characters to display from workspace names (1-10).")
     from: 1
     to: 10
     value: valueCharacterCount
-    onValueChanged: {
-      valueCharacterCount = value;
-      saveSettings();
-    }
+    onValueChanged: valueCharacterCount = value
     visible: valueLabelMode === "name"
   }
 
-  NValueSlider {
-    label: I18n.tr("bar.workspace.pill-size-label")
-    description: I18n.tr("bar.workspace.pill-size-description")
-    from: 0.4
-    to: 1.0
-    stepSize: 0.01
-    value: valuePillSize
-    defaultValue: widgetMetadata.pillSize
-    showReset: true
-    onMoved: value => {
-               valuePillSize = value;
-               saveSettings();
-             }
-    text: Math.round(valuePillSize * 100) + "%"
-    visible: !valueShowApplications
-  }
-
-  NComboBox {
-    id: fontWeightCombo
-    label: I18n.tr("bar.workspace.font-weight-label")
-    description: I18n.tr("bar.workspace.font-weight-description")
-    model: [
-      {
-        "key": "regular",
-        "name": I18n.tr("common.font-weight-regular")
-      },
-      {
-        "key": "medium",
-        "name": I18n.tr("common.font-weight-medium")
-      },
-      {
-        "key": "semibold",
-        "name": I18n.tr("common.font-weight-semibold")
-      },
-      {
-        "key": "bold",
-        "name": I18n.tr("common.font-weight-bold")
-      },
-    ]
-    currentKey: widgetData.fontWeight || widgetMetadata.fontWeight
-    onSelected: key => {
-                  valueFontWeight = key;
-                  saveSettings();
-                }
-    minimumWidth: 200
-  }
-
   NToggle {
-    label: I18n.tr("bar.workspace.hide-unoccupied-label")
-    description: I18n.tr("bar.workspace.hide-unoccupied-description")
+    label: root.trOrDefault("bar.workspace.hide-unoccupied-label", "Hide unoccupied")
+    description: root.trOrDefault("bar.workspace.hide-unoccupied-description", "Don't display workspaces without windows.")
     checked: valueHideUnoccupied
-    onToggled: checked => {
-                 valueHideUnoccupied = checked;
-                 saveSettings();
-               }
+    onToggled: checked => valueHideUnoccupied = checked
   }
 
   NToggle {
-    label: I18n.tr("bar.workspace.show-labels-only-when-occupied-label")
-    description: I18n.tr("bar.workspace.show-labels-only-when-occupied-description")
+    label: root.trOrDefault("bar.workspace.show-labels-only-when-occupied-label", "Show labels only when occupied")
+    description: root.trOrDefault("bar.workspace.show-labels-only-when-occupied-description", "Only show workspace labels when they contain windows.")
     checked: valueShowLabelsOnlyWhenOccupied
-    onToggled: checked => {
-                 valueShowLabelsOnlyWhenOccupied = checked;
-                 saveSettings();
-               }
+    onToggled: checked => valueShowLabelsOnlyWhenOccupied = checked
   }
 
   NToggle {
-    label: I18n.tr("bar.workspace.follow-focused-screen-label")
-    description: I18n.tr("bar.workspace.follow-focused-screen-description")
+    label: root.trOrDefault("bar.workspace.follow-focused-screen-label", "Follow focused screen")
+    description: root.trOrDefault("bar.workspace.follow-focused-screen-description", "Display workspaces from the currently focused screen, rather than the screen where the bar is located.")
     checked: valueFollowFocusedScreen
-    onToggled: checked => {
-                 valueFollowFocusedScreen = checked;
-                 saveSettings();
-               }
+    onToggled: checked => valueFollowFocusedScreen = checked
   }
 
   NToggle {
-    label: I18n.tr("bar.workspace.enable-scrollwheel-label")
-    description: I18n.tr("bar.workspace.enable-scrollwheel-description")
+    label: root.trOrDefault("bar.workspace.enable-scrollwheel-label", "Scroll to switch workspaces")
+    description: root.trOrDefault("bar.workspace.enable-scrollwheel-description", "Switch between workspaces using the mouse scroll wheel.")
     checked: valueEnableScrollWheel
-    onToggled: checked => {
-                 valueEnableScrollWheel = checked;
-                 saveSettings();
-               }
+    onToggled: checked => valueEnableScrollWheel = checked
   }
 
   NDivider {
@@ -194,51 +138,23 @@ ColumnLayout {
   }
 
   NToggle {
-    label: I18n.tr("bar.workspace.show-applications-label")
-    description: I18n.tr("bar.workspace.show-applications-description")
+    label: root.trOrDefault("bar.workspace.show-applications-label", "Show applications")
+    description: root.trOrDefault("bar.workspace.show-applications-description", "Display application icons inside each workspace.")
     checked: valueShowApplications
-    onToggled: checked => {
-                 valueShowApplications = checked;
-                 saveSettings();
-               }
+    onToggled: checked => valueShowApplications = checked
   }
 
   NToggle {
-    label: I18n.tr("bar.workspace.show-applications-hover-label")
-    description: I18n.tr("bar.workspace.show-applications-hover-description")
-    checked: valueShowApplicationsHover
-    onToggled: checked => {
-                 valueShowApplicationsHover = checked;
-                 saveSettings();
-               }
-    visible: valueShowApplications
-  }
-
-  NToggle {
-    label: I18n.tr("bar.workspace.show-badge-label")
-    description: I18n.tr("bar.workspace.show-badge-description")
-    checked: valueShowBadge
-    onToggled: checked => {
-                 valueShowBadge = checked;
-                 saveSettings();
-               }
-    visible: valueShowApplications
-  }
-
-  NToggle {
-    label: I18n.tr("bar.tray.colorize-icons-label")
-    description: I18n.tr("bar.active-window.colorize-icons-description")
+    label: root.trOrDefault("bar.tray.colorize-icons-label", "Colorize icons")
+    description: root.trOrDefault("bar.active-window.colorize-icons-description", "Apply theme colors to active window icon.")
     checked: valueColorizeIcons
-    onToggled: checked => {
-                 valueColorizeIcons = checked;
-                 saveSettings();
-               }
+    onToggled: checked => valueColorizeIcons = checked
     visible: valueShowApplications
   }
 
   NValueSlider {
-    label: I18n.tr("bar.workspace.unfocused-icons-opacity-label")
-    description: I18n.tr("bar.workspace.unfocused-icons-opacity-description")
+    label: root.trOrDefault("bar.workspace.unfocused-icons-opacity-label", "Unfocused icons opacity")
+    description: root.trOrDefault("bar.workspace.unfocused-icons-opacity-description", "Set the opacity level for unfocused app icons.")
     from: 0
     to: 1
     stepSize: 0.01
@@ -254,8 +170,8 @@ ColumnLayout {
   }
 
   NValueSlider {
-    label: I18n.tr("bar.workspace.grouped-border-opacity-label")
-    description: I18n.tr("bar.workspace.grouped-border-opacity-description")
+    label: root.trOrDefault("bar.workspace.grouped-border-opacity-label", "Border opacity")
+    description: root.trOrDefault("bar.workspace.grouped-border-opacity-description", "Set the opacity level for workspace container borders.")
     from: 0
     to: 1
     stepSize: 0.01
@@ -271,8 +187,8 @@ ColumnLayout {
   }
 
   NValueSlider {
-    label: I18n.tr("bar.taskbar.icon-scale-label")
-    description: I18n.tr("bar.taskbar.icon-scale-description")
+    label: root.trOrDefault("bar.taskbar.icon-scale-label", "Icon scaling")
+    description: root.trOrDefault("bar.taskbar.icon-scale-description", "Sets the scaling factor for taskbar icons.")
     from: 0.5
     to: 1
     stepSize: 0.01
@@ -287,37 +203,42 @@ ColumnLayout {
     visible: valueShowApplications
   }
 
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NColorChoice {
-    label: I18n.tr("bar.workspace.focused-color-label")
-    description: I18n.tr("bar.workspace.focused-color-description")
-    currentKey: valueFocusedColor
-    onSelected: key => {
-                  valueFocusedColor = key;
-                  saveSettings();
-                }
-  }
-
-  NColorChoice {
-    label: I18n.tr("bar.workspace.occupied-color-label")
-    description: I18n.tr("bar.workspace.occupied-color-description")
-    currentKey: valueOccupiedColor
-    onSelected: key => {
-                  valueOccupiedColor = key;
-                  saveSettings();
-                }
-  }
-
-  NColorChoice {
-    label: I18n.tr("bar.workspace.empty-color-label")
-    description: I18n.tr("bar.workspace.empty-color-description")
-    currentKey: valueEmptyColor
-    onSelected: key => {
-                  valueEmptyColor = key;
-                  saveSettings();
-                }
+  NComboBox {
+    label: root.trOrDefault("bar.workspace.active-indicator-style-label", "Active indicator style")
+    description: root.trOrDefault("bar.workspace.active-indicator-style-description", "Choose how the focused application is highlighted.")
+    model: [
+      {
+        "key": "pill",
+        "name": root.trOrDefault("bar.workspace.active-indicator-pill", "Pill")
+      },
+      {
+        "key": "circle",
+        "name": root.trOrDefault("bar.workspace.active-indicator-circle", "Circle")
+      },
+      {
+        "key": "ring",
+        "name": root.trOrDefault("bar.workspace.active-indicator-ring", "Ring")
+      },
+      {
+        "key": "glow",
+        "name": root.trOrDefault("bar.workspace.active-indicator-glow", "Glow")
+      },
+      {
+        "key": "line",
+        "name": root.trOrDefault("bar.workspace.active-indicator-line", "Line")
+      },
+      {
+        "key": "dot",
+        "name": root.trOrDefault("bar.workspace.active-indicator-dot", "Dot")
+      },
+      {
+        "key": "none",
+        "name": root.trOrDefault("common.none", "None")
+      }
+    ]
+    currentKey: valueActiveIndicatorStyle
+    onSelected: key => valueActiveIndicatorStyle = key
+    minimumWidth: 200
+    visible: valueShowApplications
   }
 }

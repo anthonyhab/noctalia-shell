@@ -297,7 +297,7 @@ Singleton {
                                     "showLabelsOnlyWhenOccupied": true,
                                     "colorizeIcons": false,
                                     "unfocusedIconsOpacity": 1.0,
-                                    "groupedBorderOpacity": 1.0,
+                                    "groupedBorderOpacity": 0.35,
                                     "enableScrollWheel": true,
                                     "iconScale": 0.8,
                                     "focusedColor": "primary",
@@ -305,7 +305,8 @@ Singleton {
                                     "emptyColor": "secondary",
                                     "showBadge": true,
                                     "pillSize": 0.6,
-                                    "fontWeight": "bold"
+                                    "fontWeight": "bold",
+                                    "activeIndicatorStyle": "pill"
                                   },
                                   "Volume": {
                                     "displayMode": "onhover",
