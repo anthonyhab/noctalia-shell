@@ -4,12 +4,15 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import qs.Commons
 import qs.Services.Keyboard
+import "HyprlandWorkspaceSignature.js" as HyprlandWorkspaceSignature
 
 Item {
   id: root
 
   // Properties that match the facade interface
   property ListModel workspaces: ListModel {}
+  property ListModel specialWorkspaces: ListModel {}
+  property string activeSpecialWorkspaceName: ""
   property var windows: []
   property int focusedWindowIndex: -1
 
@@ -18,11 +21,13 @@ Item {
   signal activeWindowChanged
   signal windowListChanged
   signal displayScalesChanged
+  signal focusedScreenChanged
 
   // Hyprland-specific properties
   property bool initialized: false
   property var workspaceCache: ({})
   property var windowCache: ({})
+  property string lastWorkspaceSignature: ""
 
   // Debounce timer for updates
   Timer {
@@ -159,45 +164,149 @@ Item {
   // Safe update wrapper
   function safeUpdate() {
     safeUpdateWindows();
-    safeUpdateWorkspaces();
-    workspaceChanged();
+    const workspacesChanged = safeUpdateWorkspaces();
+    if (workspacesChanged) {
+      workspaceChanged();
+    }
     windowListChanged();
   }
 
   // Safe workspace update
   function safeUpdateWorkspaces() {
     try {
-      workspaces.clear();
-      workspaceCache = {};
-
       if (!Hyprland.workspaces || !Hyprland.workspaces.values) {
-        return;
+        return false;
       }
 
       const hlWorkspaces = Hyprland.workspaces.values;
       const occupiedIds = getOccupiedWorkspaceIds();
 
+      const hlToplevels = Hyprland.toplevels?.values || [];
+      const signature = HyprlandWorkspaceSignature.buildSignature(hlWorkspaces, occupiedIds, hlToplevels);
+      if (signature === lastWorkspaceSignature) {
+        return false; // No change
+      }
+      lastWorkspaceSignature = signature;
+
+      // Clear both models
+      workspaces.clear();
+      specialWorkspaces.clear();
+      workspaceCache = {};
+
+      const normalWorkspaces = [];
+      const scratchpadWorkspaces = [];
+
       for (var i = 0; i < hlWorkspaces.length; i++) {
         const ws = hlWorkspaces[i];
-        if (ws.name && ws.name.startsWith("special:"))
-          continue;
+        const isScratchpad = (ws.id < 0) || (ws.name && ws.name.startsWith("special:"));
+        
+        if (isScratchpad) {
+          // Normalize scratchpad name
+          let scratchpadName = ws.name || "";
+          if (scratchpadName.startsWith("special:")) {
+            scratchpadName = scratchpadName.substring(8);
+          }
+          
+          // Generate label and key
+          const scratchpadLabel = scratchpadName.length > 0 ? scratchpadName.charAt(0).toUpperCase() : "S";
+          const scratchpadKey = scratchpadName.length > 0 ? scratchpadName : "special";
+          
+          const spData = {
+            "id": ws.id,
+            "idx": ws.id,
+            "name": ws.name || "",
+            "scratchpadName": scratchpadName,
+            "scratchpadLabel": scratchpadLabel,
+            "scratchpadKey": scratchpadKey,
+            "output": (ws.monitor && ws.monitor.name) ? ws.monitor.name : "",
+            "isActive": ws.active === true,
+            "isFocused": ws.focused === true,
+            "isUrgent": ws.urgent === true,
+            "isOccupied": occupiedIds[ws.id] === true,
+            "isScratchpad": true
+          };
+          
+          scratchpadWorkspaces.push(spData);
+          workspaceCache[ws.id] = spData;
+        } else {
+          const wsData = {
+            "id": ws.id,
+            "idx": ws.id,
+            "name": ws.name || "",
+            "output": (ws.monitor && ws.monitor.name) ? ws.monitor.name : "",
+            "isActive": ws.active === true,
+            "isFocused": ws.focused === true,
+            "isUrgent": ws.urgent === true,
+            "isOccupied": occupiedIds[ws.id] === true,
+            "isScratchpad": false
+          };
+          
+          normalWorkspaces.push(wsData);
+          workspaceCache[ws.id] = wsData;
+        }
+      }
 
-        const wsData = {
-          "id": ws.id,
-          "idx": ws.id,
-          "name": ws.name || "",
-          "output": (ws.monitor && ws.monitor.name) ? ws.monitor.name : "",
-          "isActive": ws.active === true,
-          "isFocused": ws.focused === true,
-          "isUrgent": ws.urgent === true,
-          "isOccupied": occupiedIds[ws.id] === true
+      // Secondary pass: detect scratchpads from windows (handles empty scratchpads not in workspaces list)
+      const scratchpadIdsFromWorkspaces = new Set();
+      for (let i = 0; i < scratchpadWorkspaces.length; i++) {
+        scratchpadIdsFromWorkspaces.add(scratchpadWorkspaces[i].id);
+      }
+
+      for (let i = 0; i < hlToplevels.length; i++) {
+        const toplevel = hlToplevels[i];
+        if (!toplevel || !toplevel.workspace) continue;
+
+        const wsId = toplevel.workspace.id;
+        if (wsId >= 0 || scratchpadIdsFromWorkspaces.has(wsId)) continue;
+
+        let scratchpadName = toplevel.workspace.name || "";
+        if (scratchpadName.startsWith("special:")) {
+          scratchpadName = scratchpadName.substring(8);
+        }
+
+        const scratchpadLabel = scratchpadName.length > 0 ? scratchpadName.charAt(0).toUpperCase() : "S";
+        const scratchpadKey = scratchpadName.length > 0 ? scratchpadName : "special";
+
+        const spData = {
+          "id": wsId,
+          "idx": wsId,
+          "name": toplevel.workspace.name || "",
+          "scratchpadName": scratchpadName,
+          "scratchpadLabel": scratchpadLabel,
+          "scratchpadKey": scratchpadKey,
+          "output": toplevel.monitor?.name || "",
+          "isActive": false,
+          "isFocused": false,
+          "isUrgent": false,
+          "isOccupied": true,
+          "isScratchpad": true
         };
 
-        workspaceCache[ws.id] = wsData;
-        workspaces.append(wsData);
+        scratchpadWorkspaces.push(spData);
+        workspaceCache[wsId] = spData;
       }
+
+      // Sort normal workspaces by idx
+      normalWorkspaces.sort((a, b) => a.idx - b.idx);
+
+      // Sort scratchpad workspaces by key (alphabetical)
+      scratchpadWorkspaces.sort((a, b) => a.scratchpadKey.localeCompare(b.scratchpadKey));
+
+      // Populate normal workspaces model
+      for (var j = 0; j < normalWorkspaces.length; j++) {
+        workspaces.append(normalWorkspaces[j]);
+      }
+
+      // Populate special workspaces model
+      for (var k = 0; k < scratchpadWorkspaces.length; k++) {
+        specialWorkspaces.append(scratchpadWorkspaces[k]);
+      }
+
+      return true; // Workspaces changed
+
     } catch (e) {
       Logger.e("HyprlandService", "Error updating workspaces:", e);
+      return false;
     }
   }
 
@@ -282,6 +391,15 @@ Item {
       }
 
       windows = toSortedWindowList(windowsList);
+
+      // Recalculate focused index from the sorted list to ensure it's accurate
+      newFocusedIndex = -1;
+      for (var k = 0; k < windows.length; k++) {
+        if (windows[k].isFocused) {
+          newFocusedIndex = k;
+          break;
+        }
+      }
 
       if (newFocusedIndex !== focusedWindowIndex) {
         focusedWindowIndex = newFocusedIndex;
@@ -452,8 +570,12 @@ Item {
     target: Hyprland.workspaces
     enabled: initialized
     function onValuesChanged() {
-      safeUpdateWorkspaces();
-      workspaceChanged();
+      const changed = safeUpdateWorkspaces();
+      if (changed) {
+        workspaceChanged();
+        // Reconcile scratchpad state after workspace changes
+        reconcileActiveScratchpad();
+      }
     }
   }
 
@@ -461,7 +583,7 @@ Item {
     target: Hyprland.toplevels
     enabled: initialized
     function onValuesChanged() {
-      updateTimer.restart();
+      Qt.callLater(safeUpdate);
     }
   }
 
@@ -471,9 +593,11 @@ Item {
     function onRawEvent(event) {
       Hyprland.refreshWorkspaces();
       Hyprland.refreshToplevels();
-      safeUpdateWorkspaces();
-      workspaceChanged();
-      updateTimer.restart();
+      const changed = safeUpdateWorkspaces();
+      if (changed) {
+        workspaceChanged();
+      }
+      Qt.callLater(safeUpdate);
 
       const monitorsEvents = ["configreloaded", "monitoradded", "monitorremoved", "monitoraddedv2", "monitorremovedv2"];
 
@@ -487,16 +611,58 @@ Item {
     }
   }
 
+  Connections {
+    target: Hyprland
+    enabled: initialized
+    ignoreUnknownSignals: true
+    function onFocusedMonitorChanged() {
+      focusedScreenChanged();
+    }
+  }
+
   // Public functions
   function switchToWorkspace(workspace) {
     try {
-      if (workspace.name) {
-        Hyprland.dispatch(`workspace ${workspace.name}`);
-        return;
+      if (workspace.isScratchpad) {
+        // Scratchpad workspaces use togglespecialworkspace
+        const scratchName = workspace.scratchpadName || "";
+        if (scratchName.length > 0) {
+          Hyprland.dispatch("togglespecialworkspace " + scratchName);
+          // Optimistic update: mark this scratchpad as active
+          activeSpecialWorkspaceName = scratchName;
+        }
+      } else {
+        // Normal workspaces
+        if (workspace.name) {
+          Hyprland.dispatch(`workspace ${workspace.name}`);
+        } else {
+          Hyprland.dispatch(`workspace ${workspace.idx}`);
+        }
+        // Clear active special workspace when switching to normal
+        activeSpecialWorkspaceName = "";
       }
-      Hyprland.dispatch(`workspace ${workspace.idx}`);
     } catch (e) {
       Logger.e("HyprlandService", "Failed to switch workspace:", e);
+    }
+  }
+
+  // Event-based reconciliation: update active special workspace name
+  // This handles external toggles (e.g., via keybind)
+  function reconcileActiveScratchpad() {
+    try {
+      // Check if any scratchpad workspace reports as focused/active
+      for (let i = 0; i < specialWorkspaces.count; i++) {
+        const sp = specialWorkspaces.get(i);
+        if (sp && sp.isFocused) {
+          activeSpecialWorkspaceName = sp.scratchpadName;
+          return;
+        }
+      }
+      // If we get here, no scratchpad is focused
+      // Keep current value (don't clear) - user might have toggled off
+      // Only clear if we explicitly switched to a normal workspace
+    } catch (e) {
+      Logger.d("HyprlandService", "Failed to reconcile scratchpad state:", e);
     }
   }
 

@@ -6,6 +6,7 @@
     "monitors": [],
     "density": "default",
     "showOutline": false,
+    "widgetOutlineColorKey": "none",
     "showCapsule": true,
     "capsuleOpacity": 1,
     "capsuleColorKey": "none",
@@ -79,7 +80,13 @@
     "rightClickAction": "controlCenter",
     "rightClickFollowMouse": true,
     "rightClickCommand": "",
-    "screenOverrides": []
+    "screenOverrides": [],
+    "outline": {
+      "enabled": false,
+      "width": 1,
+      "opacity": 1,
+      "colorKey": "none"
+    }
   },
   "general": {
     "avatarImage": "",
@@ -154,6 +161,13 @@
     "boxBorderEnabled": false,
     "panelBackgroundOpacity": 0.93,
     "translucentWidgets": false,
+    "iconScale": 1,
+    "outerOutline": {
+      "enabled": false,
+      "width": 1,
+      "opacity": 1,
+      "colorKey": "none"
+    },
     "panelsAttachedToBar": true,
     "settingsPanelMode": "attached",
     "settingsPanelSideBarCardStyle": false

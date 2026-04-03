@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Services.UPower
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Hardware
 import qs.Services.Networking
 import qs.Services.UI
@@ -34,8 +35,9 @@ Item {
     return {};
   }
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isBarVertical: barGeometryConfig.isVertical
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
 
   readonly property string displayMode: widgetSettings.displayMode !== undefined ? widgetSettings.displayMode : widgetMetadata.displayMode
@@ -155,7 +157,7 @@ Item {
     anchors.centerIn: nBattery
     width: root.isBarVertical ? root.capsuleHeight : nBattery.width + Style.margin2S
     height: root.isBarVertical ? nBattery.height + Style.margin2S : root.capsuleHeight
-    radius: Math.min(Style.radiusL, width / 2)
+    radius: Math.min(Style.radiusM, width / 2)
     color: graphicMouseArea.containsMouse ? Color.mHover : Style.capsuleColor
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth

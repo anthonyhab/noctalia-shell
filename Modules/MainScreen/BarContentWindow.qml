@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Commons
 import qs.Modules.Bar
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 
 /**
@@ -35,14 +36,17 @@ PanelWindow {
   WlrLayershell.exclusionMode: ExclusionMode.Ignore // Don't reserve space - BarExclusionZone in MainScreen handles that
 
   // Position and size to match bar location (per-screen)
-  readonly property string barPosition: Settings.getBarPositionForScreen(barWindow.screen?.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-  readonly property bool isFramed: Settings.data.bar.barType === "framed"
-  readonly property real frameThickness: Settings.data.bar.frameThickness ?? 12
-  readonly property bool barFloating: Settings.data.bar.floating || false
-  readonly property real barMarginH: Math.ceil(barFloating ? Settings.data.bar.marginHorizontal : 0)
-  readonly property real barMarginV: Math.ceil(barFloating ? Settings.data.bar.marginVertical : 0)
-  readonly property real barHeight: Style.getBarHeightForScreen(barWindow.screen?.name)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(barWindow.screen?.name)
+  readonly property var barWindowMargins: ShellGeometryPolicy.barWindowMargins(barWindow.screen?.name)
+  readonly property var barWindowSize: ShellGeometryPolicy.barWindowImplicitSize(barWindow.screen)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barIsVertical: barGeometryConfig.isVertical
+  readonly property bool isFramed: barGeometryConfig.isFramed
+  readonly property real frameThickness: barGeometryConfig.frameThickness
+  readonly property bool barFloating: barGeometryConfig.floating
+  readonly property real barMarginH: barGeometryConfig.marginHorizontal
+  readonly property real barMarginV: barGeometryConfig.marginVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
 
   // Auto-hide properties
   readonly property bool autoHide: Settings.getBarDisplayModeForScreen(barWindow.screen?.name) === "auto_hide"
@@ -212,15 +216,15 @@ PanelWindow {
 
   // Handle floating margins and framed mode offsets
   margins {
-    top: (barPosition === "top") ? barMarginV : (isFramed ? frameThickness : barMarginV)
-    bottom: (barPosition === "bottom") ? barMarginV : (isFramed ? frameThickness : barMarginV)
-    left: (barPosition === "left") ? barMarginH : (isFramed ? frameThickness : barMarginH)
-    right: (barPosition === "right") ? barMarginH : (isFramed ? frameThickness : barMarginH)
+    top: barWindowMargins.top
+    bottom: barWindowMargins.bottom
+    left: barWindowMargins.left
+    right: barWindowMargins.right
   }
 
   // Set a tight window size
-  implicitWidth: barIsVertical ? barHeight : barWindow.screen.width
-  implicitHeight: barIsVertical ? barWindow.screen.height : barHeight
+  implicitWidth: barWindowSize.width
+  implicitHeight: barWindowSize.height
 
   // Bar content loader - unloads when hidden to prevent input
   Loader {

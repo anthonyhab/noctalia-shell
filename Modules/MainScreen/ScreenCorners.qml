@@ -18,7 +18,8 @@ Item {
     anchors.fill: parent
 
     // Cache the Shape to a texture to prevent continuous re-tessellation
-    layer.enabled: true
+    layer.enabled: Settings.data.general.showScreenCorners
+    layer.smooth: false
 
     Shape {
       id: cornersShape

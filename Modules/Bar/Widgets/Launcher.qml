@@ -49,7 +49,7 @@ NIconButton {
   tooltipDirection: BarService.getTooltipDirection(screenName)
   baseSize: Style.getCapsuleHeightForScreen(screenName)
   applyUiScale: false
-  customRadius: Style.radiusL
+  customRadius: Style.radiusM
   colorBg: Style.capsuleColor
   colorFg: iconColor
   colorBgHover: Color.mHover
@@ -111,7 +111,7 @@ NIconButton {
     layer.enabled: (enableColorization) && (useDistroLogo || customIconPath !== "")
     layer.effect: ShaderEffect {
       property color targetColor: !hovering ? iconColor : Color.mOnHover
-      property real colorizeMode: 2.0
+      property vector4d params: Qt.vector4d(2.0, 0.0, 0.0, 0.0)
 
       fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
     }

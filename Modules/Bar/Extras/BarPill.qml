@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Widgets
 
 Item {
@@ -24,8 +25,9 @@ Item {
   property color customIconColor: "transparent"
   property color customTextColor: "transparent"
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVerticalBar: barGeometryConfig.isVertical
 
   signal shown
   signal hidden

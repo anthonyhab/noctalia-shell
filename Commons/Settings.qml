@@ -178,6 +178,7 @@ Singleton {
       property list<string> monitors: [] // holds bar visibility per monitor
       property string density: "default" // "compact", "default", "comfortable"
       property bool showOutline: false
+      property string widgetOutlineColorKey: "none"
       property bool showCapsule: true
       property real capsuleOpacity: 1.0
       property string capsuleColorKey: "none"
@@ -201,6 +202,14 @@ Singleton {
 
       // Bar outer corners (inverted/concave corners at bar edges when not floating)
       property bool outerCorners: true
+
+      // Bar outline settings (border drawn around the outside of the bar background)
+      property JsonObject outline: JsonObject {
+        property bool enabled: false
+        property int width: 1
+        property real opacity: 1.0
+        property string colorKey: "outline"
+      }
 
       // Hide bar/panels when compositor overview is active
       property bool hideOnOverview: false
@@ -332,6 +341,13 @@ Singleton {
       property bool boxBorderEnabled: false
       property real panelBackgroundOpacity: 0.93
       property bool translucentWidgets: false
+      property real iconScale: 1.0
+      property JsonObject outerOutline: JsonObject {
+        property bool enabled: false
+        property int width: 1
+        property real opacity: 1.0
+        property string colorKey: "outline"
+      }
       property bool panelsAttachedToBar: true
       property string settingsPanelMode: "attached" // "centered", "attached", "window"
       property bool settingsPanelSideBarCardStyle: false

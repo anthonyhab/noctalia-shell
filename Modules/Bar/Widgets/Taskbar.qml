@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Compositor
 import qs.Services.System
 import qs.Services.UI
@@ -23,9 +24,10 @@ Item {
 
   // Explicit screenName property ensures reactive binding when screen changes
   readonly property string screenName: screen ? screen.name : ""
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: Style.getBarHeightForScreen(screenName)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVerticalBar: barGeometryConfig.isVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
   readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
@@ -47,16 +49,14 @@ Item {
   readonly property bool showTitle: isVerticalBar ? false : (widgetSettings.showTitle !== undefined) ? widgetSettings.showTitle : widgetMetadata.showTitle
   readonly property bool smartWidth: (widgetSettings.smartWidth !== undefined) ? widgetSettings.smartWidth : widgetMetadata.smartWidth
   readonly property int maxTaskbarWidthPercent: (widgetSettings.maxTaskbarWidth !== undefined) ? widgetSettings.maxTaskbarWidth : widgetMetadata.maxTaskbarWidth
-  readonly property real iconScale: (widgetSettings.iconScale !== undefined) ? widgetSettings.iconScale : widgetMetadata.iconScale
+  readonly property real iconScale: ((widgetSettings.iconScale !== undefined) ? widgetSettings.iconScale : widgetMetadata.iconScale) * Style.iconScaleRatio
   readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
 
   // Maximum width for the taskbar widget to prevent overlapping with other widgets
   readonly property real maxTaskbarWidth: {
     if (!screen || isVerticalBar || !smartWidth || maxTaskbarWidthPercent <= 0)
       return 0;
-    var barFloating = Settings.data.bar.floating || false;
-    var barMarginH = barFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0;
-    var availableWidth = screen.width - (barMarginH * 2);
+    var availableWidth = screen.width - (barGeometryConfig.marginHorizontal * 2);
     return Math.round(availableWidth * (maxTaskbarWidthPercent / 100));
   }
 
@@ -94,6 +94,16 @@ Item {
       }
     }
     return null;
+  }
+
+  function trOrDefault(key, fallbackText) {
+    var translated = I18n.tr(key);
+    if (translated === undefined || translated === null)
+      return fallbackText;
+    if (typeof translated === "string" && translated.length >= 4 && translated.slice(0, 2) === "!!" && translated.slice(-2) === "!!") {
+      return fallbackText;
+    }
+    return translated;
   }
   property int modelUpdateTrigger: 0  // Dummy property to force model re-evaluation
 
@@ -454,7 +464,7 @@ Item {
       if (root.selectedWindowId) {
         // Focus item (for running apps)
         items.push({
-                     "label": I18n.tr("common.focus"),
+                     "label": root.trOrDefault("common.focus", "Focus"),
                      "action": "focus",
                      "icon": "eye"
                    });
@@ -462,14 +472,14 @@ Item {
         // Pin/Unpin item (always available when right-clicking an app)
         const isPinned = root.isAppPinned(root.selectedAppId);
         items.push({
-                     "label": !isPinned ? I18n.tr("common.pin") : I18n.tr("common.unpin"),
+                     "label": !isPinned ? root.trOrDefault("common.pin", "Pin") : root.trOrDefault("common.unpin", "Unpin"),
                      "action": "pin",
                      "icon": !isPinned ? "pin" : "unpin"
                    });
 
         // Close item (for running apps)
         items.push({
-                     "label": I18n.tr("common.close"),
+                     "label": root.trOrDefault("common.close", "Close"),
                      "action": "close",
                      "icon": "x"
                    });
@@ -490,7 +500,7 @@ Item {
         }
       }
       items.push({
-                   "label": I18n.tr("actions.widget-settings"),
+                   "label": root.trOrDefault("actions.widget-settings", "Widget settings"),
                    "action": "widget-settings",
                    "icon": "settings"
                  });
@@ -860,8 +870,8 @@ Item {
                     // Apply dock shader to all taskbar icons
                     layer.enabled: widgetSettings.colorizeIcons !== false
                     layer.effect: ShaderEffect {
-                      property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
-                      property real colorizeMode: 0.0 // Dock mode (grayscale)
+                      property color targetColor: Color.mOnSurface
+                      property vector4d params: Qt.vector4d(0.0, 0.0, 0.0, 0.0) // Dock mode (grayscale)
 
                       fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
                     }
@@ -976,7 +986,7 @@ Item {
     if (root.selectedWindowId) {
       // Focus item (for running apps)
       items.push({
-                   "label": I18n.tr("common.focus"),
+                   "label": root.trOrDefault("common.focus", "Focus"),
                    "action": "focus",
                    "icon": "eye"
                  });
@@ -984,14 +994,14 @@ Item {
       // Pin/Unpin item
       const isPinned = root.isAppPinned(root.selectedAppId);
       items.push({
-                   "label": !isPinned ? I18n.tr("common.pin") : I18n.tr("common.unpin"),
+                   "label": !isPinned ? root.trOrDefault("common.pin", "Pin") : root.trOrDefault("common.unpin", "Unpin"),
                    "action": "pin",
                    "icon": !isPinned ? "pin" : "unpin"
                  });
 
       // Close item
       items.push({
-                   "label": I18n.tr("common.close"),
+                   "label": root.trOrDefault("common.close", "Close"),
                    "action": "close",
                    "icon": "x"
                  });
@@ -1012,7 +1022,7 @@ Item {
       }
     }
     items.push({
-                 "label": I18n.tr("actions.widget-settings"),
+                 "label": root.trOrDefault("actions.widget-settings", "Widget settings"),
                  "action": "widget-settings",
                  "icon": "settings"
                });

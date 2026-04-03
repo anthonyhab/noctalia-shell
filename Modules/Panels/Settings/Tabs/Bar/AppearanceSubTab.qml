@@ -191,6 +191,18 @@ ColumnLayout {
     onToggled: checked => Settings.data.bar.showOutline = checked
   }
 
+  NColorChoice {
+    Layout.fillWidth: true
+    visible: Settings.data.bar.showOutline
+    label: I18n.tr("panels.bar.appearance-widget-outline-color-label")
+    description: I18n.tr("panels.bar.appearance-widget-outline-color-description")
+    noneColor: Color.mOutline
+    noneOnColor: Color.mOnSurface
+    currentKey: Settings.data.bar.widgetOutlineColorKey || "none"
+    defaultValue: Settings.getDefaultValue("bar.widgetOutlineColorKey")
+    onSelected: key => Settings.data.bar.widgetOutlineColorKey = key
+  }
+
   NToggle {
     Layout.fillWidth: true
     label: I18n.tr("panels.bar.appearance-show-capsule-label")
@@ -224,6 +236,80 @@ ColumnLayout {
     defaultValue: Settings.getDefaultValue("bar.capsuleOpacity")
     onMoved: value => Settings.data.bar.capsuleOpacity = value
     text: Math.floor(Settings.data.bar.capsuleOpacity * 100) + "%"
+  }
+
+  NDivider {
+    Layout.fillWidth: true
+  }
+
+  NLabel {
+    label: I18n.tr("panels.bar.appearance-outline-header")
+  }
+
+  NToggle {
+    Layout.fillWidth: true
+    label: I18n.tr("panels.bar.appearance-outline-enabled-label")
+    description: I18n.tr("panels.bar.appearance-outline-enabled-description")
+    checked: Settings.data.bar.outline ? Settings.data.bar.outline.enabled : false
+    defaultValue: Settings.getDefaultValue("bar.outline.enabled")
+    onToggled: checked => {
+      if (Settings.data.bar.outline)
+        Settings.data.bar.outline.enabled = checked;
+    }
+  }
+
+  NValueSlider {
+    Layout.fillWidth: true
+    visible: Settings.data.bar.outline ? Settings.data.bar.outline.enabled : false
+    label: I18n.tr("panels.bar.appearance-outline-width-label")
+    description: I18n.tr("panels.bar.appearance-outline-width-description")
+    from: 1
+    to: 6
+    stepSize: 1
+    showReset: true
+    value: Settings.data.bar.outline ? Settings.data.bar.outline.width : 1
+    defaultValue: Settings.getDefaultValue("bar.outline.width")
+    onMoved: value => {
+      if (Settings.data.bar.outline)
+        Settings.data.bar.outline.width = value;
+    }
+    text: (Settings.data.bar.outline ? Settings.data.bar.outline.width : 1) + "px"
+  }
+
+  NValueSlider {
+    Layout.fillWidth: true
+    visible: Settings.data.bar.outline ? Settings.data.bar.outline.enabled : false
+    label: I18n.tr("panels.bar.appearance-outline-opacity-label")
+    description: I18n.tr("panels.bar.appearance-outline-opacity-description")
+    from: 0
+    to: 1
+    stepSize: 0.01
+    showReset: true
+    value: Settings.data.bar.outline ? Settings.data.bar.outline.opacity : 1
+    defaultValue: Settings.getDefaultValue("bar.outline.opacity")
+    onMoved: value => {
+      if (Settings.data.bar.outline)
+        Settings.data.bar.outline.opacity = value;
+    }
+    text: Math.floor((Settings.data.bar.outline ? Settings.data.bar.outline.opacity : 1) * 100) + "%"
+  }
+
+  NColorChoice {
+    Layout.fillWidth: true
+    visible: Settings.data.bar.outline ? Settings.data.bar.outline.enabled : false
+    label: I18n.tr("panels.bar.appearance-outline-color-label")
+    description: I18n.tr("panels.bar.appearance-outline-color-description")
+    noneColor: Color.mOutline
+    noneOnColor: Color.mOnSurface
+    currentKey: Settings.data.bar.outline ? (Settings.data.bar.outline.colorKey || "outline") : "outline"
+    onSelected: key => {
+      if (Settings.data.bar.outline)
+        Settings.data.bar.outline.colorKey = key;
+    }
+  }
+
+  NDivider {
+    Layout.fillWidth: true
   }
 
   NToggle {

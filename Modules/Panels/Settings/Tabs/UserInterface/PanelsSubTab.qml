@@ -41,6 +41,61 @@ ColumnLayout {
     text: Math.floor(Settings.data.ui.panelBackgroundOpacity * 100) + "%"
   }
 
+  NHeader {
+    label: I18n.tr("panels.user-interface.outer-outline-header")
+  }
+
+  NToggle {
+    Layout.fillWidth: true
+    label: I18n.tr("panels.user-interface.outer-outline-enabled-label")
+    description: I18n.tr("panels.user-interface.outer-outline-enabled-description")
+    checked: Settings.data.ui.outerOutline.enabled
+    defaultValue: Settings.getDefaultValue("ui.outerOutline.enabled")
+    onToggled: checked => Settings.data.ui.outerOutline.enabled = checked
+  }
+
+  NValueSlider {
+    Layout.fillWidth: true
+    visible: Settings.data.ui.outerOutline.enabled
+    label: I18n.tr("panels.user-interface.outer-outline-width-label")
+    description: I18n.tr("panels.user-interface.outer-outline-width-description")
+    from: 1
+    to: 6
+    stepSize: 1
+    showReset: true
+    value: Settings.data.ui.outerOutline.width
+    defaultValue: Settings.getDefaultValue("ui.outerOutline.width")
+    onMoved: value => Settings.data.ui.outerOutline.width = value
+    text: Settings.data.ui.outerOutline.width + "px"
+  }
+
+  NValueSlider {
+    Layout.fillWidth: true
+    visible: Settings.data.ui.outerOutline.enabled
+    label: I18n.tr("panels.user-interface.outer-outline-opacity-label")
+    description: I18n.tr("panels.user-interface.outer-outline-opacity-description")
+    from: 0
+    to: 1
+    stepSize: 0.01
+    showReset: true
+    value: Settings.data.ui.outerOutline.opacity
+    defaultValue: Settings.getDefaultValue("ui.outerOutline.opacity")
+    onMoved: value => Settings.data.ui.outerOutline.opacity = value
+    text: Math.floor(Settings.data.ui.outerOutline.opacity * 100) + "%"
+  }
+
+  NColorChoice {
+    Layout.fillWidth: true
+    visible: Settings.data.ui.outerOutline.enabled
+    label: I18n.tr("panels.user-interface.outer-outline-color-label")
+    description: I18n.tr("panels.user-interface.outer-outline-color-description")
+    noneColor: Color.mOutline
+    noneOnColor: Color.mOnSurface
+    currentKey: Settings.data.ui.outerOutline.colorKey || "none"
+    defaultValue: Settings.getDefaultValue("ui.outerOutline.colorKey")
+    onSelected: key => Settings.data.ui.outerOutline.colorKey = key
+  }
+
   NValueSlider {
     Layout.fillWidth: true
     label: I18n.tr("panels.user-interface.dimmer-opacity-label")

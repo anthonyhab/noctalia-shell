@@ -4,6 +4,7 @@ import Quickshell
 
 import qs.Commons
 import qs.Modules.MainScreen
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 import qs.Widgets
 
@@ -54,7 +55,8 @@ SmartPanel {
   preferredHeightRatio: 0.5
 
   // Positioning
-  readonly property string screenBarPosition: Settings.getBarPositionForScreen(screen?.name)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string screenBarPosition: barGeometryConfig.position
   readonly property string panelPosition: {
     if (Settings.data.appLauncher.position === "follow_bar") {
       if (screenBarPosition === "left" || screenBarPosition === "right") {

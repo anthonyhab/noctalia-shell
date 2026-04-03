@@ -5,6 +5,7 @@ import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.Commons
 import qs.Modules.MainScreen
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 import qs.Widgets
 
@@ -18,6 +19,7 @@ SmartPanel {
   // Widget info for menu functionality (set by Tray widget when opening)
   property string widgetSection: ""
   property int widgetIndex: -1
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
 
   // Sizing properties must stay at root for preferredWidth/Height
   readonly property int maxColumns: 8
@@ -184,15 +186,59 @@ SmartPanel {
           width: root.cellSize
           height: root.cellSize
 
-          IconImage {
+          // Hidden probe: check if the icon theme has an icon matching this app's tooltip title
+          Image {
+            id: themeProbe
+            visible: false
+            width: 1; height: 1
+            source: {
+              const icon = modelData?.icon || "";
+              if (!icon || icon.startsWith("image://icon/") || icon.includes("?path=")) return "";
+              const title = modelData?.tooltipTitle || modelData?.name || "";
+              if (!title) return "";
+              return "image://icon/" + title.toLowerCase();
+            }
+          }
+
+          NAutoCropIcon {
             id: trayIcon
-            anchors.fill: parent
-            asynchronous: true
-            backer.fillMode: Image.PreserveAspectFit
+
+            // Calculate manual scale overrides for specific apps just in case the bounding fails
+            readonly property real explicitScale: {
+              const itemId = modelData?.id || "";
+              // Check for user-configured override first
+              if (itemId && panelContent.widgetSettings.iconScales && panelContent.widgetSettings.iconScales[itemId]) {
+                return panelContent.widgetSettings.iconScales[itemId];
+              }
+              return Style.iconScaleRatio;
+            }
+
+            renderSize: root.cellSize
+            manualScale: explicitScale
+            maxSize: root.cellSize - Style.margin2XS
+            anchors.centerIn: parent
+
             source: {
               let icon = modelData?.icon || "";
-              if (!icon)
-                return "";
+              if (!icon) return "";
+
+              // Check for user-configured override
+              const itemId = modelData?.id || "";
+              if (itemId && panelContent.widgetSettings.iconOverrides && panelContent.widgetSettings.iconOverrides[itemId]) {
+                return "image://icon/" + panelContent.widgetSettings.iconOverrides[itemId];
+              }
+
+              // Default Steam override
+              if (itemId === "steam") {
+                return "image://icon/steam_tray_mono";
+              }
+
+              // If theme has an icon matching this app's title, prefer it over the pixmap
+              if (themeProbe.source && themeProbe.status === Image.Ready) {
+                return themeProbe.source;
+              }
+
+              // Process path-based icons
               if (icon.includes("?path=")) {
                 const chunks = icon.split("?path=");
                 const name = chunks[0];
@@ -203,10 +249,14 @@ SmartPanel {
               return icon;
             }
 
-            layer.enabled: panelContent.widgetSettings.colorizeIcons !== false
-            layer.effect: ShaderEffect {
-              property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
-              property real colorizeMode: 1.0
+            // Apply SDF shader to the underlying node
+            imageNode.layer.enabled: panelContent.widgetSettings.colorizeIcons !== false
+            imageNode.layer.smooth: true
+            imageNode.layer.mipmap: true
+            imageNode.layer.textureSize: Qt.size(imageNode.sourceSize.width, imageNode.sourceSize.height)
+            imageNode.layer.effect: ShaderEffect {
+              property color targetColor: Color.mOnSurface
+              property vector4d params: Qt.vector4d(1.0, 0.0, 0.0, 0.0)
               fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
             }
 
@@ -237,12 +287,12 @@ SmartPanel {
                              if (panelContent.popupMenuWindow && panelContent.popupMenuWindow.visible) {
                                panelContent.popupMenuWindow.close();
                                return;
-                             }
+                              }
 
-                             if (modelData.hasMenu && modelData.menu && panelContent.trayMenu && panelContent.trayMenu.item) {
-                               const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
-                               // Increased spacing for better alignment with other context menus
-                               let menuX, menuY;
+                              if (modelData.hasMenu && modelData.menu && panelContent.trayMenu && panelContent.trayMenu.item) {
+                                const barPosition = root.barGeometryConfig.position;
+                                // Increased spacing for better alignment with other context menus
+                                let menuX, menuY;
 
                                if (barPosition === "left") {
                                  menuX = trayIcon.width + Style.marginL;

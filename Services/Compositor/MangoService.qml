@@ -268,7 +268,9 @@ Item {
 
         for (let i = 0; i < tags.length; i++) {
           const tag = tags[i];
-          const isFocused = tag.isActive && (tag.focused === 1 || outputName === root.selectedMonitor);
+          // Only use explicit focused flag from compositor - don't infer from selected monitor
+          // Using selectedMonitor as fallback causes focus oscillation in multi-monitor setups
+          const isFocused = tag.focused === 1;
 
           // Create unique workspace ID: outputIndex * 100 + tagId
           // This ensures each output's tags have non-overlapping IDs

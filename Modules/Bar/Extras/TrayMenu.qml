@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.UI
 import qs.Widgets
 
@@ -21,6 +22,9 @@ PopupWindow {
 
   // Derive menu from trayItem (only used for non-submenus)
   readonly property QsMenuHandle menu: isSubMenu ? null : (trayItem ? trayItem.menu : null)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(root.screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property real barHeight: barGeometryConfig.barHeight
 
   // Compute if current tray item is pinned
   readonly property bool isPinned: {
@@ -98,8 +102,6 @@ PopupWindow {
   }
   anchor.rect.y: {
     if (anchorItem && screen) {
-      const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
-
       let baseY = anchorY;
 
       // Only apply bottom bar special positioning if:
@@ -113,7 +115,6 @@ PopupWindow {
         baseY = -(implicitHeight + Style.marginS);
       } else if (barPosition === "top" && !isSubMenu && anchorY >= 0) {
         // For top bar: position menu below bar with margin
-        const barHeight = Style.getBarHeightForScreen(root.screen?.name);
         baseY = barHeight + Style.marginS;
       }
 
@@ -126,7 +127,7 @@ PopupWindow {
 
       // If window reported 0 but bar is at bottom, assume it's at screen bottom
       if (windowYOnScreen === 0 && barPosition === "bottom" && screen) {
-        windowYOnScreen = screen.height - (parentWindow ? parentWindow.height : Style.getBarHeightForScreen(screen.name));
+        windowYOnScreen = screen.height - (parentWindow ? parentWindow.height : barHeight);
       }
 
       // Calculate the screen Y of the menu top
@@ -160,7 +161,7 @@ PopupWindow {
     if (isSubMenu) {
       return anchorY;
     }
-    return anchorY + (Settings.getBarPositionForScreen(root.screen?.name) === "bottom" ? -implicitHeight : Style.getBarHeightForScreen(root.screen?.name));
+    return anchorY + (barPosition === "bottom" ? -implicitHeight : barHeight);
   }
 
   function showAt(item, x, y) {
@@ -427,10 +428,8 @@ PopupWindow {
                                    }
                                  }
 
-                                 // Determine submenu opening direction
-                                 let openLeft = false;
-                                 const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
-                                 const globalPos = entry.mapToItem(null, 0, 0);
+                                  // Determine submenu opening direction
+                                  let openLeft = false;
 
                                  if (barPosition === "right") {
                                    openLeft = true;

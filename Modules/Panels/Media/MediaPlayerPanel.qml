@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Modules.MainScreen
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Media
 import qs.Services.UI
 import qs.Widgets
@@ -12,6 +13,8 @@ import qs.Widgets.AudioSpectrum
 
 SmartPanel {
   id: root
+
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
 
   preferredWidth: Math.round((root.isSideBySide ? 480 : 400) * Style.uiScaleRatio)
   preferredHeight: Math.round((root.compactMode ? 240 : (root.showAlbumArt ? 560 : 300)) * Style.uiScaleRatio)
@@ -495,7 +498,7 @@ SmartPanel {
       values: SpectrumService.values
       fillColor: Color.mPrimary
       opacity: 0.4
-      barPosition: Settings.getBarPositionForScreen(root.screen?.name)
+      barPosition: root.barGeometryConfig.position
     }
   }
 

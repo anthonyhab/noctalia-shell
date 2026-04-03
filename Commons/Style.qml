@@ -64,6 +64,10 @@ Singleton {
   readonly property int margin2L: marginL * 2
   readonly property int margin2XL: marginXL * 2
 
+  // Icon scaling
+  readonly property real iconScaleRatio: Settings.data.ui.iconScale
+  readonly property real effectiveIconScale: uiScaleRatio * iconScaleRatio
+
   // Opacity
   readonly property real opacityNone: 0.0
   readonly property real opacityLight: 0.25
@@ -151,8 +155,54 @@ Singleton {
 
   readonly property color capsuleColor: Settings.data.bar.showCapsule ? Qt.alpha(Settings.data.bar.capsuleColorKey !== "none" ? Color.resolveColorKey(Settings.data.bar.capsuleColorKey) : Color.mSurfaceVariant, Settings.data.bar.capsuleOpacity) : "transparent"
 
-  readonly property color capsuleBorderColor: Settings.data.bar.showOutline ? Color.mPrimary : "transparent"
+  readonly property color capsuleBorderColor: {
+    if (!Settings.data.bar.showOutline)
+      return "transparent";
+    var key = Settings.data.bar.widgetOutlineColorKey || "none";
+    return key === "none" ? Color.mOutline : Color.resolveColorKey(key);
+  }
   readonly property int capsuleBorderWidth: Settings.data.bar.showOutline ? Style.borderS : 0
+
+  readonly property bool outerOutlineEnabled: Settings.data.ui.outerOutline && Settings.data.ui.outerOutline.enabled
+  readonly property real outerOutlineOpacity: {
+    var opacity = Settings.data.ui.outerOutline ? Settings.data.ui.outerOutline.opacity : 1;
+    return Math.max(0, Math.min(1, Number(opacity) || 0));
+  }
+  readonly property int outerOutlineWidth: {
+    if (!outerOutlineEnabled)
+      return 0;
+    var width = Settings.data.ui.outerOutline ? Settings.data.ui.outerOutline.width : 1;
+    return Math.max(1, Math.round((Number(width) || 1) * uiScaleRatio));
+  }
+  readonly property color outerOutlineColor: {
+    if (!outerOutlineEnabled)
+      return "transparent";
+    var key = Settings.data.ui.outerOutline ? (Settings.data.ui.outerOutline.colorKey || "none") : "none";
+    // "none" and "outline" both map to the theme outline color
+    var baseColor = (key === "none" || key === "outline") ? Color.mOutline : Color.resolveColorKey(key);
+    return Qt.alpha(baseColor, outerOutlineOpacity);
+  }
+
+  // Bar outline (independent from panel outline)
+  readonly property bool barOutlineEnabled: Settings.data.bar.outline ? Settings.data.bar.outline.enabled : false
+  readonly property real barOutlineOpacity: {
+    var opacity = Settings.data.bar.outline ? Settings.data.bar.outline.opacity : 1;
+    return Math.max(0, Math.min(1, Number(opacity) || 0));
+  }
+  readonly property int barOutlineWidth: {
+    if (!barOutlineEnabled)
+      return 0;
+    var width = Settings.data.bar.outline ? Settings.data.bar.outline.width : 1;
+    return Math.max(1, Math.round((Number(width) || 1) * uiScaleRatio));
+  }
+  readonly property color barOutlineColor: {
+    if (!barOutlineEnabled)
+      return "transparent";
+    var key = Settings.data.bar.outline ? (Settings.data.bar.outline.colorKey || "none") : "none";
+    // "none" and "outline" both map to the theme outline color
+    var baseColor = (key === "none" || key === "outline") ? Color.mOutline : Color.resolveColorKey(key);
+    return Qt.alpha(baseColor, barOutlineOpacity);
+  }
 
   readonly property color boxBorderColor: Settings.data.ui.boxBorderEnabled ? Color.mOutline : "transparent"
 
@@ -169,6 +219,12 @@ Singleton {
   // Ensures a number is always even (rounds down to nearest even)
   function toEven(n) {
     return Math.floor(n / 2) * 2;
+  }
+
+  // Calculates the precise inner radius for a nested rounded rectangle to perfectly match its container
+  // Formula: R_in = max(0, R_out - padding)
+  function nestedRadius(outerRadius, padding) {
+    return Math.max(0, outerRadius - padding);
   }
 
   // Get bar height for a specific density and orientation

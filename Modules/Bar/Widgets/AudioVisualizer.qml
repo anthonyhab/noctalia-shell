@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Media
 import qs.Services.UI
 import qs.Widgets
@@ -21,8 +22,9 @@ Item {
 
   // Explicit screenName property ensures reactive binding when screen changes
   readonly property string screenName: screen ? screen.name : ""
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVerticalBar: barGeometryConfig.isVertical
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
 
   property var widgetMetadata: BarWidgetRegistry.widgetMetadata[widgetId]

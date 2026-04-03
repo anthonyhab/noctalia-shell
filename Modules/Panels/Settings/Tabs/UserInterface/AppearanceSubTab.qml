@@ -206,6 +206,20 @@ ColumnLayout {
         onMoved: value => Settings.data.general.animationSpeed = Math.max(value, 0.05)
         text: Math.round(Settings.data.general.animationSpeed * 100) + "%"
       }
+
+      NValueSlider {
+        Layout.fillWidth: true
+        label: I18n.tr("panels.user-interface.icon-scale-label")
+        description: I18n.tr("panels.user-interface.icon-scale-description")
+        from: 0.5
+        to: 2.0
+        stepSize: 0.05
+        showReset: true
+        value: Settings.data.ui.iconScale
+        defaultValue: Settings.getDefaultValue("ui.iconScale")
+        onMoved: value => Settings.data.ui.iconScale = Math.max(0.5, Math.min(2.0, value))
+        text: Math.round(Settings.data.ui.iconScale * 100) + "%"
+      }
     }
   }
 }

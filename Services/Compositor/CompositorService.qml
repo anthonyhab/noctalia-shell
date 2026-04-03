@@ -20,8 +20,12 @@ Singleton {
 
   // Generic workspace and window data
   property ListModel workspaces: ListModel {}
+  property ListModel specialWorkspaces: ListModel {}
+  property string activeSpecialWorkspaceName: ""
   property ListModel windows: ListModel {}
   property int focusedWindowIndex: -1
+  property string focusedWindowId: ""
+  property string focusedScreen: ""
 
   // Display scale data
   property var displayScales: ({})
@@ -197,21 +201,24 @@ Singleton {
 
     // Connect backend signals to facade signals
     backend.workspaceChanged.connect(() => {
-                                       // Sync workspaces when they change
-                                       syncWorkspaces();
-                                       // Forward the signal
-                                       workspaceChanged();
-                                     });
+      // Sync workspaces when they change
+      syncWorkspaces();
+      updateFocusedScreen();
+      // Forward the signal
+      workspaceChanged();
+    });
 
     backend.activeWindowChanged.connect(() => {
                                           // Only sync focus state, not entire window list
                                           syncFocusedWindow();
+                                          updateFocusedScreen();
                                           // Forward the signal
                                           activeWindowChanged();
                                         });
 
     backend.windowListChanged.connect(() => {
                                         syncWindows();
+                                        updateFocusedScreen();
                                       });
 
     // Property bindings - use automatic property change signal
@@ -226,9 +233,16 @@ Singleton {
                                             });
     }
 
+    if (backend.focusedScreenChanged) {
+      backend.focusedScreenChanged.connect(() => {
+        updateFocusedScreen();
+      });
+    }
+
     // Initial sync
     syncWorkspaces();
     syncWindows();
+    updateFocusedScreen();
     focusedWindowIndex = backend.focusedWindowIndex;
     if (backend.overviewActive !== undefined) {
       overviewActive = backend.overviewActive;
@@ -244,6 +258,22 @@ Singleton {
     for (var i = 0; i < ws.count; i++) {
       workspaces.append(ws.get(i));
     }
+    
+    // Sync special workspaces if backend supports them (Hyprland only)
+    specialWorkspaces.clear();
+    if (backend.specialWorkspaces !== undefined) {
+      const sp = backend.specialWorkspaces;
+      for (var j = 0; j < sp.count; j++) {
+        var specialWs = sp.get(j);
+        specialWorkspaces.append(specialWs);
+      }
+    }
+
+    // Sync active special workspace name if backend supports it
+    if (backend.activeSpecialWorkspaceName !== undefined) {
+      activeSpecialWorkspaceName = backend.activeSpecialWorkspaceName;
+    }
+    
     // Emit signal to notify listeners that workspace list has been updated
     workspacesChanged();
   }
@@ -254,8 +284,35 @@ Singleton {
     for (var i = 0; i < ws.length; i++) {
       windows.append(ws[i]);
     }
+    updateFocusedWindowId();
     // Emit signal to notify listeners that window list has been updated
     windowListChanged();
+  }
+
+  function updateFocusedScreen() {
+    const nextFocusedScreen = getFocusedScreen();
+    if (typeof nextFocusedScreen === "string") {
+      focusedScreen = nextFocusedScreen;
+      return;
+    }
+    if (nextFocusedScreen && typeof nextFocusedScreen === "object" && nextFocusedScreen.name) {
+      focusedScreen = nextFocusedScreen.name;
+      return;
+    }
+    focusedScreen = "";
+  }
+
+  function updateFocusedWindowId() {
+    const focusedWindow = getFocusedWindow();
+    if (!focusedWindow) {
+      focusedWindowId = "";
+      return;
+    }
+
+    const windowId = focusedWindow.id !== undefined && focusedWindow.id !== null
+        ? focusedWindow.id
+        : focusedWindow.address;
+    focusedWindowId = windowId !== undefined && windowId !== null ? windowId.toString() : "";
   }
 
   // Sync only the focused window state, not the entire window list
@@ -271,6 +328,7 @@ Singleton {
     }
 
     focusedWindowIndex = newIndex;
+    updateFocusedWindowId();
   }
 
   // Update display scales from backend

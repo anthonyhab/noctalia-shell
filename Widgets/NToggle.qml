@@ -12,6 +12,7 @@ RowLayout {
   property string icon: ""
   property bool checked: false
   property bool hovering: false
+  property bool pressed: false
   property int baseSize: Math.round(Style.baseWidgetSize * 0.8 * Style.uiScaleRatio)
   property var defaultValue: undefined
   property string settingsPath: ""
@@ -66,22 +67,52 @@ RowLayout {
       }
     }
 
-    Rectangle {
+    Item {
+      id: knobItem
       implicitWidth: Math.round(root.baseSize * 0.4) * 2
       implicitHeight: Math.round(root.baseSize * 0.4) * 2
-      radius: Math.min(Style.iRadiusL, height / 2)
-      color: root.checked ? Color.mOnPrimary : Color.mPrimary
-      border.color: root.checked ? Color.mSurface : Color.mSurface
-      border.width: Style.borderM
       anchors.verticalCenter: parent.verticalCenter
-      anchors.verticalCenterOffset: 0
       x: root.checked ? switcher.width - width - 3 : 3
+
+      scale: root.pressed ? 0.95 : (root.hovering ? 1.05 : 1.0)
+      Behavior on scale {
+        NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+      }
 
       Behavior on x {
         NumberAnimation {
           duration: Style.animationFast
           easing.type: Easing.OutCubic
         }
+      }
+
+      Rectangle {
+        id: knobBorder
+        anchors.fill: parent
+        radius: Style.nestedRadius(switcher.radius, (switcher.height - height) / 2)
+        color: Color.mSurface
+
+        Rectangle {
+          anchors.fill: parent
+          anchors.margins: Style.borderM
+          radius: Style.nestedRadius(parent.radius, Style.borderM)
+          color: root.checked ? Color.mOnPrimary : Color.mPrimary
+
+          Behavior on color {
+            ColorAnimation {
+              duration: Style.animationFast
+            }
+          }
+        }
+      }
+
+      NDropShadow {
+        source: knobBorder
+        anchors.fill: knobBorder
+        shadowBlur: 0.5
+        shadowOpacity: 0.3
+        shadowVerticalOffset: 1
+        shadowHorizontalOffset: 0
       }
     }
 
@@ -101,6 +132,19 @@ RowLayout {
           return;
         hovering = false;
         root.exited();
+      }
+      onPressed: {
+        if (!enabled)
+          return;
+        root.pressed = true;
+      }
+      onReleased: {
+        if (!enabled)
+          return;
+        root.pressed = false;
+      }
+      onCanceled: {
+        root.pressed = false;
       }
       onClicked: {
         if (!enabled)

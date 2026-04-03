@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Noctalia
 import qs.Services.UI
 
@@ -30,9 +31,10 @@ Item {
   }
 
   // Bar orientation and height for extended click areas
-  readonly property string barPosition: Settings.getBarPositionForScreen(widgetScreen?.name)
-  readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
-  readonly property real barHeight: Style.getBarHeightForScreen(widgetScreen?.name)
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(widgetScreen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVerticalBar: barGeometryConfig.isVertical
+  readonly property real barHeight: barGeometryConfig.barHeight
 
   // Request full bar dimension from layout to extend click areas above/below widgets
   // For horizontal bars: full bar height, widget's content width

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Services.Media
 import qs.Services.UI
 import qs.Widgets
@@ -33,8 +34,9 @@ Item {
   }
 
   // Bar orientation (per-screen)
-  readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
-  readonly property bool isVertical: barPosition === "left" || barPosition === "right"
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screenName)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool isVertical: barGeometryConfig.isVertical
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
   readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
@@ -77,8 +79,8 @@ Item {
   readonly property string spectrumComponentId: "bar:mediamini:" + root.screen?.name + ":" + root.section + ":" + root.sectionWidgetIndex
   readonly property bool needsSpectrum: root.showVisualizer && root.visualizerType !== "" && root.visualizerType !== "none" && !root.isHidden
 
-  Layout.preferredHeight: isVertical ? -1 : Style.getBarHeightForScreen(screenName)
-  Layout.preferredWidth: isVertical ? Style.getBarHeightForScreen(screenName) : -1
+  Layout.preferredHeight: isVertical ? -1 : barGeometryConfig.barHeight
+  Layout.preferredWidth: isVertical ? barGeometryConfig.barHeight : -1
   Layout.fillHeight: false
   Layout.fillWidth: false
 

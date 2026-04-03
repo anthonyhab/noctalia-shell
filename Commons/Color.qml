@@ -57,6 +57,7 @@ Singleton {
 
   property color mHover: defaultColors.mHover
   property color mOnHover: defaultColors.mOnHover
+  readonly property color transparent: "transparent"
 
   // --- Color transition animations ---
   Behavior on mPrimary {

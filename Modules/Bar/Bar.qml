@@ -6,6 +6,7 @@ import Quickshell.Services.UPower
 import Quickshell.Wayland
 import qs.Commons
 import qs.Modules.Bar.Extras
+import qs.Modules.MainScreen.Backgrounds
 import qs.Modules.Notification
 import qs.Modules.Panels.Settings
 import qs.Services.Compositor
@@ -64,9 +65,11 @@ Item {
   readonly property var barItem: barRegion
 
   // Bar positioning properties (per-screen)
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property bool barIsVertical: barPosition === "left" || barPosition === "right"
-  readonly property bool barFloating: Settings.data.bar.floating || false
+  readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
+  readonly property string barPosition: barGeometryConfig.position
+  readonly property bool barIsVertical: barGeometryConfig.isVertical
+  readonly property bool barFloating: barGeometryConfig.floating
+  readonly property var barCornerStates: ShellGeometryPolicy.barCornerStates(screen?.name)
 
   // Bar density (per-screen)
   readonly property string barDensity: Settings.getBarDensityForScreen(screen?.name)
@@ -212,77 +215,10 @@ Item {
         // State 0: Normal (inner curve)
         // State 1: Horizontal inversion (outer curve on X-axis)
         // State 2: Vertical inversion (outer curve on Y-axis)
-        readonly property int topLeftCornerState: {
-          // Floating bar: always simple rounded corners
-          if (barFloating)
-            return 0;
-          // Top bar: top corners against screen edge = no radius
-          if (barPosition === "top")
-            return -1;
-          // Left bar: top-left against screen edge = no radius
-          if (barPosition === "left")
-            return -1;
-          // Bottom/Right bar with outerCorners: inverted corner
-          if (Settings.data.bar.outerCorners && (barPosition === "bottom" || barPosition === "right")) {
-            return barIsVertical ? 1 : 2; // horizontal invert for vertical bars, vertical invert for horizontal
-          }
-          // No outerCorners = square
-          return -1;
-        }
-
-        readonly property int topRightCornerState: {
-          // Floating bar: always simple rounded corners
-          if (barFloating)
-            return 0;
-          // Top bar: top corners against screen edge = no radius
-          if (barPosition === "top")
-            return -1;
-          // Right bar: top-right against screen edge = no radius
-          if (barPosition === "right")
-            return -1;
-          // Bottom/Left bar with outerCorners: inverted corner
-          if (Settings.data.bar.outerCorners && (barPosition === "bottom" || barPosition === "left")) {
-            return barIsVertical ? 1 : 2;
-          }
-          // No outerCorners = square
-          return -1;
-        }
-
-        readonly property int bottomLeftCornerState: {
-          // Floating bar: always simple rounded corners
-          if (barFloating)
-            return 0;
-          // Bottom bar: bottom corners against screen edge = no radius
-          if (barPosition === "bottom")
-            return -1;
-          // Left bar: bottom-left against screen edge = no radius
-          if (barPosition === "left")
-            return -1;
-          // Top/Right bar with outerCorners: inverted corner
-          if (Settings.data.bar.outerCorners && (barPosition === "top" || barPosition === "right")) {
-            return barIsVertical ? 1 : 2;
-          }
-          // No outerCorners = square
-          return -1;
-        }
-
-        readonly property int bottomRightCornerState: {
-          // Floating bar: always simple rounded corners
-          if (barFloating)
-            return 0;
-          // Bottom bar: bottom corners against screen edge = no radius
-          if (barPosition === "bottom")
-            return -1;
-          // Right bar: bottom-right against screen edge = no radius
-          if (barPosition === "right")
-            return -1;
-          // Top/Left bar with outerCorners: inverted corner
-          if (Settings.data.bar.outerCorners && (barPosition === "top" || barPosition === "left")) {
-            return barIsVertical ? 1 : 2;
-          }
-          // No outerCorners = square
-          return -1;
-        }
+        readonly property int topLeftCornerState: root.barCornerStates.topLeft
+        readonly property int topRightCornerState: root.barCornerStates.topRight
+        readonly property int bottomLeftCornerState: root.barCornerStates.bottomLeft
+        readonly property int bottomRightCornerState: root.barCornerStates.bottomRight
 
         function isPointOverWidget(xPos, yPos) {
           var widgets = BarService.getAllWidgetInstances(null, screen.name);

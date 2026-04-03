@@ -115,22 +115,34 @@ Item {
     workspaceCache = {};
 
     for (const ws of workspacesData) {
+      // Niri uses negative indices for scratchpad workspaces
+      const isScratchpad = ws.idx < 0 || (ws.name && ws.name.toLowerCase().includes("scratch"));
+      const scratchpadName = isScratchpad ? (ws.name || "scratch") : "";
+      const scratchpadLabel = scratchpadName.length > 0 ? scratchpadName.charAt(0).toUpperCase() : "S";
+      
       const wsData = {
         "id": ws.id,
-        "idx": ws.idx,
+        "idx": ws.idx, // Keep original index (negative for scratchpad)
         "name": ws.name || "",
         "output": ws.output || "",
         "isFocused": ws.is_focused === true,
         "isActive": ws.is_active === true,
         "isUrgent": ws.is_urgent === true,
-        "isOccupied": ws.active_window_id ? true : false
+        "isOccupied": ws.active_window_id ? true : false,
+        "isScratchpad": isScratchpad,
+        "scratchpadLabel": scratchpadLabel
       };
 
       workspacesList.push(wsData);
       workspaceCache[ws.id] = wsData;
     }
 
+    // Sort: normal workspaces first, then scratchpad workspaces at the end
     workspacesList.sort((a, b) => {
+                          // Put scratchpad workspaces at the end
+                          if (a.isScratchpad !== b.isScratchpad) {
+                            return a.isScratchpad ? 1 : -1;
+                          }
                           if (a.output !== b.output) {
                             return a.output.localeCompare(b.output);
                           }
