@@ -295,17 +295,20 @@ Singleton {
                                     "showApplications": false,
                                     "showApplicationsHover": false,
                                     "showLabelsOnlyWhenOccupied": true,
+                                    "showScratchpad": true,
+                                    "scrollThroughScratchpads": false,
                                     "colorizeIcons": false,
                                     "unfocusedIconsOpacity": 1.0,
-                                    "groupedBorderOpacity": 1.0,
+                                    "groupedBorderOpacity": 0.35,
                                     "enableScrollWheel": true,
-                                    "iconScale": 0.8,
+                                    "iconScale": 1.0,
                                     "focusedColor": "primary",
                                     "occupiedColor": "secondary",
                                     "emptyColor": "secondary",
                                     "showBadge": true,
                                     "pillSize": 0.6,
-                                    "fontWeight": "bold"
+                                    "fontWeight": "bold",
+                                    "activeIndicatorStyle": "pill"
                                   },
                                   "Volume": {
                                     "displayMode": "onhover",
