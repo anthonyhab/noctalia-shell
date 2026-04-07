@@ -10,7 +10,6 @@ Item {
   property int chipExtent: 24
   property real unfocusedIconsOpacity: 0.75
   property bool colorizeIcons: false
-  property bool isVertical: false
 
   signal clicked(var window)
   signal rightClicked(var window, string appId)
@@ -35,7 +34,6 @@ Item {
   WorkspaceWindowIcon {
     anchors.fill: parent
     windowModel: root.leaderWindow
-    isFocusedWindow: false
     chipExtent: root.chipExtent
     unfocusedIconsOpacity: root.unfocusedIconsOpacity
     colorizeIcons: root.colorizeIcons

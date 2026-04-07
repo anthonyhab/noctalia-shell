@@ -24,13 +24,13 @@ Item {
   property bool colorizeIcons: false
   property real unfocusedIconsOpacity: 0.75
   property string hoveredWorkspaceId: ""
+  property string tooltipDirection: "bottom"
 
   property alias labelAnchor: labelAnchor
 
   signal switchToWorkspace(var workspace)
   signal windowActivated(var window, var workspace, bool workspaceIsFocused)
   signal windowRightClicked(var anchorItem, var window, string appId)
-  signal windowHovered(var anchorItem, bool hovered, string title)
   signal contextMenuRequested(var anchorItem, string windowId, string appId)
   signal hoverActivated(var workspaceId)
 
@@ -45,6 +45,8 @@ Item {
       return false;
     if (isScratchpad)
       return workspaceModel.scratchpadName === activeSpecialWorkspaceName;
+    if (activeSpecialWorkspaceName !== "")
+      return false;
     return !!workspaceModel.isFocused;
   }
   readonly property string workspaceName: WorkspaceWindowSource.deriveWorkspaceName(workspaceModel, isScratchpad)
@@ -109,7 +111,7 @@ Item {
   readonly property color labelSurfaceColor: {
     if (isFocused)
       return colorPalette.anchorFill;
-    if (isHoverPreview)
+    if (labelHovered || isHoverPreview)
       return colorPalette.hoverAnchorFill;
     if (hasWorkspaceWindows)
       return colorPalette.occupiedAnchorFill;
@@ -118,7 +120,7 @@ Item {
   readonly property color labelTextColor: {
     if (isFocused)
       return colorPalette.anchorText;
-    if (isHoverPreview)
+    if (labelHovered || isHoverPreview)
       return colorPalette.hoverAnchorText;
     if (hasWorkspaceWindows)
       return colorPalette.occupiedAnchorText;
@@ -126,6 +128,7 @@ Item {
   }
   readonly property color revealPanelSurfaceColor: isFocused ? colorPalette.panelFill : colorPalette.hoverPanelFill
   readonly property color revealPanelOverflowFill: isFocused ? colorPalette.activeOverflowFill : colorPalette.hoverOverflowFill
+  readonly property color revealPanelHoveredOverflowFill: isFocused ? colorPalette.panelFill : colorPalette.activeOverflowFill
   readonly property color revealPanelOverflowText: isFocused ? colorPalette.activeOverflowText : colorPalette.hoverOverflowText
   readonly property real revealPanelInactiveIconOpacity: isFocused
       ? Math.min(unfocusedIconsOpacity, 0.78)
@@ -158,6 +161,8 @@ Item {
       labelHovered = false;
       panelHovered = false;
       hoverExpanded = false;
+    } else if (hoveredWorkspaceId === "" && itemHovered) {
+      requestHoverExpansion(true);
     }
   }
 
@@ -363,6 +368,10 @@ Item {
     }
   }
   Component.onCompleted: rebuildVisibleWindows()
+  Component.onDestruction: {
+    if (hoveredWorkspaceId === workspaceId)
+      hoverActivated("")
+  }
 
   Rectangle {
     id: shell
@@ -389,6 +398,7 @@ Item {
 
     Rectangle {
       readonly property int bw: Style.capsuleBorderWidth
+      id: labelSurface
       x: bw
       y: bw
       width: parent.width - bw * 2
@@ -421,6 +431,7 @@ Item {
     }
 
     MouseArea {
+      id: labelMouseArea
       anchors.fill: parent
       hoverEnabled: true
       cursorShape: Qt.PointingHandCursor
@@ -455,15 +466,16 @@ Item {
     unfocusedIconsOpacity: root.unfocusedIconsOpacity
     panelSurfaceColor: root.revealPanelSurfaceColor
     overflowSurfaceColor: root.revealPanelOverflowFill
+    hoveredOverflowSurfaceColor: root.revealPanelHoveredOverflowFill
     overflowTextColor: root.revealPanelOverflowText
     iconColor: root.colorPalette.panelIconColor
     hoveredIconColor: root.colorPalette.hoveredIconColor
     focusIndicatorColor: root.colorPalette.focusIndicatorColor
     inactiveIconOpacity: root.revealPanelInactiveIconOpacity
+    tooltipDirection: root.tooltipDirection
     onPanelHoverChanged: hovered => root.panelHovered = hovered
     onWindowActivated: window => root.activateWindow(window)
     onWindowRightClicked: (window, appId) => root.windowRightClicked(labelAnchor, window, appId)
-    onWindowHovered: (hovered, title) => root.windowHovered(labelAnchor, hovered, title)
   }
 
   Rectangle {

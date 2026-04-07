@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import qs.Services.UI
 
 Item {
   id: root
@@ -17,10 +18,10 @@ Item {
   property color hoveredIconColor: "#ffffff"
   property bool itemHovered: false
   property bool itemPressed: false
+  property string tooltipDirection: "bottom"
 
   signal clicked(var window)
   signal rightClicked(var window, string appId)
-  signal hovered(bool isHovered, string title)
 
   implicitWidth: slotExtent
   implicitHeight: slotExtent
@@ -48,7 +49,7 @@ Item {
       fillMode: Image.PreserveAspectFit
       smooth: true
       asynchronous: true
-      opacity: root.itemHovered ? Math.min(1.0, root.iconOpacity + 0.18) : root.iconOpacity
+      opacity: root.itemHovered ? Math.min(1.0, root.iconOpacity + 0.20) : root.iconOpacity
 
       Behavior on opacity {
         NumberAnimation {
@@ -75,12 +76,13 @@ Item {
     onEntered: {
       root.itemHovered = true;
       const title = root.windowModel?.title || root.windowModel?.appId || "";
-      root.hovered(true, title.toString());
+      if (title.length > 0)
+        TooltipService.show(root, title, root.tooltipDirection, 120);
     }
     onExited: {
       root.itemHovered = false;
       root.itemPressed = false;
-      root.hovered(false, "");
+      TooltipService.hide(root);
     }
     onPressed: mouse => {
       if (mouse.button === Qt.LeftButton)

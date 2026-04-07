@@ -19,6 +19,7 @@ Item {
   property real unfocusedIconsOpacity
   property string activeSpecialWorkspaceName
   property string hoveredWorkspaceId: ""
+  property string tooltipDirection: "bottom"
 
   property var normalizedWorkspaces: []
 
@@ -108,6 +109,7 @@ Item {
       colorizeIcons: root.colorizeIcons
       unfocusedIconsOpacity: root.unfocusedIconsOpacity
       hoveredWorkspaceId: root.hoveredWorkspaceId
+      tooltipDirection: root.tooltipDirection
       onWidthChanged: {
         if (!root.isVertical)
           horizontalStrip.forceLayout();
@@ -119,7 +121,6 @@ Item {
       onSwitchToWorkspace: workspace => root.switchToWorkspace(workspace)
       onWindowActivated: (window, workspace, workspaceIsFocused) => root.windowActivated(window, workspace, workspaceIsFocused)
       onWindowRightClicked: (anchorItem, window, appId) => root.windowRightClicked(anchorItem, window, appId)
-      onWindowHovered: (anchorItem, hovered, title) => root.windowHovered(anchorItem, hovered, title)
       onContextMenuRequested: (anchorItem, windowId, appId) => root.contextMenuRequested(anchorItem, windowId, appId)
       onHoverActivated: workspaceId => root.hoveredWorkspaceId = workspaceId || ""
     }
@@ -152,6 +153,5 @@ Item {
   signal switchToWorkspace(var workspace)
   signal windowActivated(var window, var workspace, bool workspaceIsFocused)
   signal windowRightClicked(var anchorItem, var window, string appId)
-  signal windowHovered(var anchorItem, bool hovered, string title)
   signal contextMenuRequested(var anchorItem, string windowId, string appId)
 }

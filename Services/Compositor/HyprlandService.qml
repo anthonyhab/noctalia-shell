@@ -591,21 +591,49 @@ Item {
     target: Hyprland
     enabled: initialized
     function onRawEvent(event) {
-      Hyprland.refreshWorkspaces();
-      Hyprland.refreshToplevels();
-      const changed = safeUpdateWorkspaces();
-      if (changed) {
-        workspaceChanged();
+      // Events that affect workspace/window state - only these trigger full refresh
+      // NOTE: Hyprland events use camelCase (e.g., createWorkspace, not createworkspace)
+      const workspaceToplevelEvents = [
+        "createWorkspace", "destroyWorkspace",
+        "openWindow", "closeWindow",
+        "moveWindow", "moveWorkspace",
+        "windowtitle", "activeWindow",
+        "focusedMon", "workspace",
+        "activespecial",
+        "openLayer", "closeLayer"
+      ];
+
+      const eventName = event.name;
+
+      if (workspaceToplevelEvents.includes(eventName)) {
+        Hyprland.refreshWorkspaces();
+        Hyprland.refreshToplevels();
+        const changed = safeUpdateWorkspaces();
+        if (changed) {
+          workspaceChanged();
+        }
+        Qt.callLater(safeUpdate);
       }
-      Qt.callLater(safeUpdate);
 
+      // Handle monitor events
       const monitorsEvents = ["configreloaded", "monitoradded", "monitorremoved", "monitoraddedv2", "monitorremovedv2"];
-
-      if (monitorsEvents.includes(event.name)) {
+      if (monitorsEvents.includes(eventName)) {
         Qt.callLater(queryDisplayScales);
       }
 
-      if (event.name == "activelayout") {
+      // Handle activespecial for scratchpad state
+      if (eventName === "activespecial") {
+        // format: "workspaceName,monitorName" — workspaceName is empty when scratchpad closes
+        const parts = event.data.split(",");
+        let scratchpadName = parts[0].trim();
+        if (scratchpadName.startsWith("special:")) {
+          scratchpadName = scratchpadName.substring(8);
+        }
+        activeSpecialWorkspaceName = scratchpadName;
+      }
+
+      // Handle keyboard layout events
+      if (eventName == "activeLayout") {
         handleActiveLayoutEvent(event.data);
       }
     }

@@ -22,27 +22,23 @@ Item {
   property real unfocusedIconsOpacity: 0.75
   property color panelSurfaceColor: "#000000"
   property color overflowSurfaceColor: "#000000"
+  property color hoveredOverflowSurfaceColor: "#000000"
   property color overflowTextColor: "#ffffff"
   property color iconColor: "#ffffff"
   property color hoveredIconColor: "#ffffff"
   property color focusIndicatorColor: "#ffffff"
   property real inactiveIconOpacity: 0.78
 
+  property string tooltipDirection: "bottom"
+
   signal windowActivated(var window)
   signal windowRightClicked(var window, string appId)
-  signal windowHovered(bool hovered, string title)
   signal panelHoverChanged(bool hovered)
 
   readonly property int panelInset: isHoverPreview ? metrics.hoverPanelInset : metrics.activePanelInset
   readonly property int leadingInset: isHoverPreview ? metrics.hoverPanelLeadingInset : metrics.activePanelLeadingInset
   readonly property int trailingInset: isHoverPreview ? metrics.hoverPanelTrailingInset : metrics.activePanelTrailingInset
   readonly property int panelMinLength: isHoverPreview ? metrics.hoverPanelMinLength : metrics.activePanelMinLength
-  readonly property real activePanelOpacity: 0.96
-  readonly property real hoverPreviewOpacity: 0.84
-  readonly property real panelOpacity: isHoverPreview ? hoverPreviewOpacity : activePanelOpacity
-  readonly property bool hoverPreviewIsShorter: panelMinLength === metrics.hoverPanelMinLength && metrics.hoverPanelMinLength < metrics.activePanelMinLength
-  readonly property bool hoverPreviewIsLighter: panelOpacity === hoverPreviewOpacity && hoverPreviewOpacity < activePanelOpacity
-
   readonly property int slotExtent: Math.max(1, metrics.iconSlotExtent || Style.toOdd(capsuleHeight))
   readonly property int iconRenderExtent: Math.max(1, metrics.iconRenderExtent || Style.toOdd(capsuleHeight * 0.8))
   readonly property int slotGap: Math.max(0, metrics.panelIconGap || 0)
@@ -140,15 +136,12 @@ Item {
           slotExtent: root.slotExtent
           renderExtent: root.iconRenderExtent
           windowModel: modelData
-          isFocusedWindow: {
-            const windowId = modelData && (modelData.id !== undefined && modelData.id !== null ? modelData.id : modelData.address);
-            return windowId !== undefined && windowId !== null && windowId.toString() === root.focusedWindowId;
-          }
           unfocusedIconsOpacity: root.unfocusedIconsOpacity
           iconOpacity: isFocusedWindow ? 1.0 : root.inactiveIconOpacity
           colorizeIcons: root.colorizeIcons
           iconColor: root.iconColor
           hoveredIconColor: root.hoveredIconColor
+          tooltipDirection: root.tooltipDirection
           iconSource: {
             const appId = modelData && modelData.appId ? modelData.appId.toString() : "";
             let icon = ThemeIcons.iconForAppId(appId);
@@ -160,7 +153,6 @@ Item {
           }
           onClicked: window => root.windowActivated(window)
           onRightClicked: (window, appId) => root.windowRightClicked(window, appId)
-          onHovered: (hovered, title) => root.windowHovered(hovered, title)
         }
       }
     }
@@ -168,20 +160,57 @@ Item {
     Component {
       id: overflowChipDelegate
 
-      Rectangle {
+      Item {
         width: root.slotExtent
         height: root.slotExtent
-        radius: Math.min(Style.radiusS, height / 2)
-        color: root.overflowSurfaceColor
-        border.color: "transparent"
-        border.width: 0
 
-        Text {
+        Rectangle {
+          id: overflowChip
           anchors.centerIn: parent
-          text: "+" + root.overflowCount
-          color: root.overflowTextColor
-          font.pointSize: Math.max(Style.fontSizeXXS, root.barFontSize * 0.86)
-          font.weight: Style.fontWeightBold
+          width: parent.width
+          height: parent.height
+          radius: Math.min(Style.radiusS, height / 2)
+          color: mouseArea.containsMouse ? root.hoveredOverflowSurfaceColor : root.overflowSurfaceColor
+          border.color: "transparent"
+          border.width: 0
+          scale: mouseArea.pressed ? 0.94 : (mouseArea.containsMouse ? 1.05 : 1.0)
+
+          Behavior on color {
+            ColorAnimation {
+              duration: Style.animationFast
+              easing.type: Easing.OutCubic
+            }
+          }
+
+          Behavior on scale {
+            NumberAnimation {
+              duration: Style.animationFast
+              easing.type: Easing.OutCubic
+            }
+          }
+
+          Text {
+            anchors.centerIn: parent
+            text: "+" + root.overflowCount
+            color: root.overflowTextColor
+            font.pointSize: Math.max(Style.fontSizeXXS, root.barFontSize * 0.86)
+            font.weight: Style.fontWeightBold
+
+            Behavior on color {
+              ColorAnimation {
+                duration: Style.animationFast
+                easing.type: Easing.OutCubic
+              }
+            }
+          }
+        }
+
+        MouseArea {
+          id: mouseArea
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          acceptedButtons: Qt.LeftButton
         }
       }
     }
@@ -261,11 +290,8 @@ Item {
     }
   }
 
-  MouseArea {
-    anchors.fill: parent
-    hoverEnabled: true
-    acceptedButtons: Qt.NoButton
-    onEntered: root.panelHoverChanged(true)
-    onExited: root.panelHoverChanged(false)
+  HoverHandler {
+    enabled: root.isExpanded
+    onHoveredChanged: root.panelHoverChanged(hovered)
   }
 }

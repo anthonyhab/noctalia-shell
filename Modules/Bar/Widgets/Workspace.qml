@@ -55,6 +55,7 @@ Item {
     marginXS: Style.marginXS,
   })
 
+  readonly property string tooltipDirection: BarService.getTooltipDirection(root.screenName)
   readonly property string focusedWindowId: CompositorService.focusedWindowId
   readonly property string focusedScreen: CompositorService.focusedScreen
   readonly property var localWorkspaces: CompositorService.workspaces
@@ -229,6 +230,7 @@ Item {
     colorizeIcons: root.colorizeIcons
     unfocusedIconsOpacity: root.unfocusedIconsOpacity
     activeSpecialWorkspaceName: CompositorService.activeSpecialWorkspaceName
+    tooltipDirection: root.tooltipDirection
 
     onSwitchToWorkspace: ws => CompositorService.switchToWorkspace(ws)
     onWindowActivated: (window, workspace, workspaceIsFocused) => root.handleWindowActivated(window, workspace, workspaceIsFocused)
@@ -237,12 +239,6 @@ Item {
       root.selectedWindowId = window && (window.id || window.address) ? (window.id || window.address).toString() : "";
       root.selectedAppId = appId;
       contextMenu.openAtItem(anchorItem);
-    }
-    onWindowHovered: (anchorItem, hovered, title) => {
-      if (hovered)
-        TooltipService.show(anchorItem, title, BarService.getTooltipDirection(root.screenName));
-      else
-        TooltipService.hide();
     }
     onContextMenuRequested: (anchorItem, windowId, appId) => {
       root.selectedWindow = null;

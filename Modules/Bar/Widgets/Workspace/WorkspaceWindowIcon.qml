@@ -6,7 +6,6 @@ Item {
   id: root
 
   property var windowModel: null
-  property bool isFocusedWindow: false
   property bool showAccentChip: false
   property int chipExtent: 24
   property int accentChipExtent: 24

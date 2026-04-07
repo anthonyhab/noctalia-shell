@@ -239,6 +239,14 @@ Singleton {
       });
     }
 
+    if (backend.activeSpecialWorkspaceNameChanged) {
+      backend.activeSpecialWorkspaceNameChanged.connect(() => {
+        if (backend.activeSpecialWorkspaceName !== undefined) {
+          activeSpecialWorkspaceName = backend.activeSpecialWorkspaceName;
+        }
+      });
+    }
+
     // Initial sync
     syncWorkspaces();
     syncWindows();

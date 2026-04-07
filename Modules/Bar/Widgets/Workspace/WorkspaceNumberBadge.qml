@@ -8,7 +8,6 @@ Item {
   property var workspaceModel
   property string labelMode: "index"
   property int characterCount: 3
-  property bool hasWindows: false
   property bool isFocused: false
   property bool isScratchpad: false
   property real capsuleHeight: Style.capsuleHeight
@@ -40,27 +39,44 @@ Item {
   implicitWidth: Math.max(capsuleHeight - (inset * 2), label.contentWidth + horizontalPadding * 2)
   implicitHeight: capsuleHeight
 
-  NText {
-    id: label
+  Item {
+    id: labelStage
     anchors.centerIn: parent
-    text: root.labelText
-    family: Settings.data.ui.fontFixed
-    pointSize: root.barFontSize
-    applyUiScale: false
-    font.weight: root.isFocused ? Style.fontWeightBold : Style.fontWeightMedium
-    color: root.isFocused ? Color.mOnPrimary : (root.itemHovered ? Color.mOnHover : Qt.alpha(Color.mOnSurface, 0.96))
-    Behavior on color {
-      ColorAnimation {
-        duration: Style.animationNormal
+    width: root.width
+    height: root.height
+    scale: badgeMouseArea.pressed ? 0.94 : (root.itemHovered ? 1.05 : 1.0)
+    transformOrigin: Item.Center
+
+    Behavior on scale {
+      NumberAnimation {
+        duration: Style.animationFast
         easing.type: Easing.OutCubic
       }
     }
-    features: ({
-                 "tnum": 1
-               })
+
+    NText {
+      id: label
+      anchors.centerIn: parent
+      text: root.labelText
+      family: Settings.data.ui.fontFixed
+      pointSize: root.barFontSize
+      applyUiScale: false
+      font.weight: root.isFocused ? Style.fontWeightBold : Style.fontWeightMedium
+      color: root.isFocused ? Color.mOnPrimary : (root.itemHovered ? Color.mOnHover : Qt.alpha(Color.mOnSurface, 0.96))
+      Behavior on color {
+        ColorAnimation {
+          duration: Style.animationNormal
+          easing.type: Easing.OutCubic
+        }
+      }
+      features: ({
+                   "tnum": 1
+                 })
+    }
   }
 
   MouseArea {
+    id: badgeMouseArea
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
