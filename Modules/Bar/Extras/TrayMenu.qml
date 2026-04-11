@@ -49,6 +49,16 @@ PopupWindow {
 
   implicitWidth: menuWidth
 
+  function safeMapToScene(item) {
+    if (!item)
+      return Qt.point(0, 0);
+
+    if (typeof item.mapToItem === "function")
+      return item.mapToItem(null, 0, 0);
+
+    return Qt.point(item.x ?? 0, item.y ?? 0);
+  }
+
   // Use the content height of the Flickable for implicit height
   implicitHeight: Math.min(screen?.height * 0.9, flickable.contentHeight + Style.margin2S)
 
@@ -71,12 +81,12 @@ PopupWindow {
       // Calculate position relative to current screen
       let menuScreenX;
       if (isSubMenu && anchorItem.Window && anchorItem.Window.window) {
-        const posInPopup = anchorItem.mapToItem(null, 0, 0);
+        const posInPopup = safeMapToScene(anchorItem);
         const parentWindow = anchorItem.Window.window;
         const windowXOnScreen = parentWindow.x - screen.x;
         menuScreenX = windowXOnScreen + posInPopup.x + baseX;
       } else {
-        const anchorGlobalPos = anchorItem.mapToItem(null, 0, 0);
+        const anchorGlobalPos = safeMapToScene(anchorItem);
         const anchorScreenX = anchorGlobalPos.x;
         menuScreenX = anchorScreenX + baseX;
       }
@@ -119,7 +129,7 @@ PopupWindow {
       }
 
       // Use a robust way to get screen coordinates
-      const posInWindow = anchorItem.mapToItem(null, 0, 0);
+      const posInWindow = safeMapToScene(anchorItem);
       const parentWindow = anchorItem.Window.window;
 
       // Calculate screen-relative Y of the window
@@ -164,16 +174,19 @@ PopupWindow {
     return anchorY + (barPosition === "bottom" ? -implicitHeight : barHeight);
   }
 
-  function showAt(item, x, y) {
+  function showAt(item, x, y, shouldRebindMenu) {
     if (!item) {
       Logger.w("TrayMenu", "anchorItem is undefined, won't show menu.");
       return;
     }
 
-    if (!opener.children || opener.children.values.length === 0) {
-      //Logger.w("TrayMenu", "Menu not ready, delaying show")
-      Qt.callLater(() => showAt(item, x, y));
-      return;
+    if (shouldRebindMenu === undefined)
+      shouldRebindMenu = true;
+
+    if (shouldRebindMenu) {
+      // Rebind once per open attempt to refresh the menu snapshot.
+      opener.menu = null;
+      opener.menu = root.menu;
     }
 
     anchorItem = item;
@@ -294,7 +307,35 @@ PopupWindow {
               anchors.rightMargin: Style.marginM
               spacing: Style.marginS
 
-              // Indicator Container
+              NText {
+                id: text
+                Layout.fillWidth: true
+                color: (modelData?.enabled ?? true) ? (mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface) : Color.mOnSurfaceVariant
+                text: modelData?.text !== "" ? modelData?.text.replace(/[\n\r]+/g, ' ') : "..."
+                pointSize: Style.fontSizeS
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.NoWrap
+                elide: Text.ElideRight
+              }
+
+              Image {
+                Layout.preferredWidth: Style.marginL
+                Layout.preferredHeight: Style.marginL
+                source: modelData?.icon ?? ""
+                visible: (modelData?.icon ?? "") !== ""
+                fillMode: Image.PreserveAspectFit
+              }
+
+              NIcon {
+                icon: modelData?.hasChildren ? "menu" : ""
+                pointSize: Style.fontSizeS
+                applyUiScale: false
+                verticalAlignment: Text.AlignVCenter
+                visible: modelData?.hasChildren ?? false
+                color: (mouseArea.containsMouse ? Color.mOnTertiary : Color.mOnSurface)
+              }
+
+              // Indicator Container (check/radio) aligned to the end of the row.
               Item {
                 visible: (modelData?.buttonType ?? QsMenuButtonType.None) !== QsMenuButtonType.None
 
@@ -305,7 +346,32 @@ PopupWindow {
                 // Helper properties
                 readonly property int type: modelData?.buttonType ?? QsMenuButtonType.None
                 readonly property bool isRadio: type === QsMenuButtonType.RadioButton
-                readonly property bool isChecked: modelData?.checkState === Qt.Checked || (modelData?.checked ?? false)
+                readonly property int normalizedCheckState: {
+                  const state = modelData?.checkState;
+
+                  if (typeof state === "number")
+                    return state;
+                  if (state !== undefined && state !== null) {
+                    const numericState = Number(state);
+                    if (!Number.isNaN(numericState))
+                      return numericState;
+                  }
+                  if (typeof state === "boolean")
+                    return state ? Qt.Checked : Qt.Unchecked;
+                  if (typeof state === "string") {
+                    const normalized = state.toLowerCase();
+                    if (normalized === "checked" || normalized === "on" || normalized === "true")
+                      return Qt.Checked;
+                    if (normalized === "partiallychecked" || normalized === "partial")
+                      return Qt.PartiallyChecked;
+                    return Qt.Unchecked;
+                  }
+
+                  return Qt.Unchecked;
+                }
+                readonly property bool isChecked: {
+                  return normalizedCheckState !== Qt.Unchecked;
+                }
 
                 // Color Logic
                 readonly property color activeColor: mouseArea.containsMouse ? Color.mOnHover : Color.mPrimary
@@ -319,7 +385,7 @@ PopupWindow {
                   width: Math.round(Style.baseWidgetSize * 0.5)
                   height: Math.round(Style.baseWidgetSize * 0.5)
                   radius: Style.iRadiusXS
-                  color: "transparent" // Transparent to match RadioButton style
+                  color: "transparent"
                   border.color: parent.borderColor
                   border.width: Style.borderM
 
@@ -348,7 +414,7 @@ PopupWindow {
                   radius: width / 2
                   color: "transparent"
                   border.color: parent.borderColor
-                  border.width: Style.borderM // Slightly thicker for radio look
+                  border.width: Style.borderM
 
                   Behavior on border.color {
                     ColorAnimation {
@@ -371,33 +437,6 @@ PopupWindow {
                     }
                   }
                 }
-              }
-
-              NText {
-                id: text
-                Layout.fillWidth: true
-                color: (modelData?.enabled ?? true) ? (mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface) : Color.mOnSurfaceVariant
-                text: modelData?.text !== "" ? modelData?.text.replace(/[\n\r]+/g, ' ') : "..."
-                pointSize: Style.fontSizeS
-                verticalAlignment: Text.AlignVCenter
-                wrapMode: Text.WordWrap
-              }
-
-              Image {
-                Layout.preferredWidth: Style.marginL
-                Layout.preferredHeight: Style.marginL
-                source: modelData?.icon ?? ""
-                visible: (modelData?.icon ?? "") !== ""
-                fillMode: Image.PreserveAspectFit
-              }
-
-              NIcon {
-                icon: modelData?.hasChildren ? "menu" : ""
-                pointSize: Style.fontSizeS
-                applyUiScale: false
-                verticalAlignment: Text.AlignVCenter
-                visible: modelData?.hasChildren ?? false
-                color: (mouseArea.containsMouse ? Color.mOnTertiary : Color.mOnSurface)
               }
             }
 
