@@ -14,9 +14,9 @@ SmartPanel {
   id: root
 
   preferredWidth: 800 * Style.uiScaleRatio
-  preferredHeight: 600 * Style.uiScaleRatio
+  preferredHeight: 650 * Style.uiScaleRatio
   preferredWidthRatio: 0.5
-  preferredHeightRatio: 0.7
+  preferredHeightRatio: 0.5
 
   // Positioning
   readonly property var barGeometryConfig: ShellGeometryPolicy.barConfig(screen?.name)
@@ -142,6 +142,9 @@ SmartPanel {
     }
     property var currentScreen: Quickshell.screens[currentScreenIndex]
     property string filterText: ""
+    property int appearanceTabIndex: 0
+    readonly property bool headerScreensStripAvailable: !Settings.data.wallpaper.setWallpaperOnAllMonitors || Settings.data.wallpaper.enableMultiMonitorDirectories
+    readonly property bool headerDevicesButtonVisible: Quickshell.screens.length > 1 || Settings.data.wallpaper.enableMultiMonitorDirectories
     property alias screenRepeater: screenRepeater
 
     Component.onCompleted: {
@@ -220,6 +223,8 @@ SmartPanel {
         if (wallhavenView && wallhavenView.gridView) {
           wallhavenView.gridView.currentIndex = -1;
         }
+        panelContent.appearanceTabIndex = Settings.data.colorSchemes.darkMode ? 1 : 0;
+        WallpaperService.wallpaperSelectionAppearance = panelContent.appearanceTabIndex === 1 ? "dark" : "light";
         // Give initial focus to search input
         Qt.callLater(() => {
                        if (searchInput.inputItem) {
@@ -294,6 +299,26 @@ SmartPanel {
             }
 
             NIconButton {
+              visible: Settings.data.wallpaper.enabled
+              icon: "sun"
+              tooltipText: Settings.data.wallpaper.linkLightAndDarkWallpapers ? I18n.tr("wallpaper.panel.header-sun-linked-tooltip") : I18n.tr("wallpaper.panel.header-sun-separate-tooltip")
+              baseSize: Style.baseWidgetSize * 0.8
+              colorBg: !Settings.data.wallpaper.linkLightAndDarkWallpapers ? Color.mPrimary : Color.smartAlpha(Color.mSurfaceVariant)
+              colorFg: !Settings.data.wallpaper.linkLightAndDarkWallpapers ? Color.mOnPrimary : Color.mPrimary
+              onClicked: Settings.data.wallpaper.linkLightAndDarkWallpapers = !Settings.data.wallpaper.linkLightAndDarkWallpapers
+            }
+
+            NIconButton {
+              visible: Settings.data.wallpaper.enabled && panelContent.headerDevicesButtonVisible
+              icon: "devices"
+              tooltipText: Settings.data.wallpaper.setWallpaperOnAllMonitors ? I18n.tr("wallpaper.panel.header-devices-apply-all-tooltip") : I18n.tr("wallpaper.panel.header-devices-per-monitor-tooltip")
+              baseSize: Style.baseWidgetSize * 0.8
+              colorBg: !Settings.data.wallpaper.setWallpaperOnAllMonitors ? Color.mPrimary : Color.smartAlpha(Color.mSurfaceVariant)
+              colorFg: !Settings.data.wallpaper.setWallpaperOnAllMonitors ? Color.mOnPrimary : Color.mPrimary
+              onClicked: Settings.data.wallpaper.setWallpaperOnAllMonitors = !Settings.data.wallpaper.setWallpaperOnAllMonitors
+            }
+
+            NIconButton {
               icon: "palette"
               tooltipText: I18n.tr("wallpaper.panel.solid-color-tooltip")
               baseSize: Style.baseWidgetSize * 0.8
@@ -325,18 +350,38 @@ SmartPanel {
             Layout.fillWidth: true
           }
 
-          NToggle {
-            label: I18n.tr("wallpaper.panel.apply-all-monitors-label")
-            description: I18n.tr("wallpaper.panel.apply-all-monitors-description")
-            checked: Settings.data.wallpaper.setWallpaperOnAllMonitors
-            onToggled: checked => Settings.data.wallpaper.setWallpaperOnAllMonitors = checked
+          NTabBar {
+            id: appearanceTabBar
+            visible: Settings.data.wallpaper.enabled && !Settings.data.wallpaper.linkLightAndDarkWallpapers
             Layout.fillWidth: true
+            currentIndex: panelContent.appearanceTabIndex
+            spacing: Style.marginM
+            distributeEvenly: true
+
+            onCurrentIndexChanged: {
+              if (currentIndex < 0) {
+                return;
+              }
+              panelContent.appearanceTabIndex = currentIndex;
+              WallpaperService.wallpaperSelectionAppearance = currentIndex === 1 ? "dark" : "light";
+              Settings.data.colorSchemes.darkMode = currentIndex === 1;
+            }
+
+            NTabButton {
+              text: I18n.tr("wallpaper.panel.appearance-light-tab")
+              tabIndex: 0
+              checked: appearanceTabBar.currentIndex === 0
+            }
+            NTabButton {
+              text: I18n.tr("wallpaper.panel.appearance-dark-tab")
+              tabIndex: 1
+              checked: appearanceTabBar.currentIndex === 1
+            }
           }
 
-          // Monitor tabs
           NTabBar {
             id: screenTabBar
-            visible: (!Settings.data.wallpaper.setWallpaperOnAllMonitors || Settings.data.wallpaper.enableMultiMonitorDirectories)
+            visible: panelContent.headerScreensStripAvailable
             Layout.fillWidth: true
             currentIndex: currentScreenIndex
             onCurrentIndexChanged: currentScreenIndex = currentIndex
@@ -437,13 +482,6 @@ SmartPanel {
                                   event.accepted = true;
                                 }
                               }
-            }
-
-            NIconButton {
-              icon: Settings.data.colorSchemes.darkMode ? "moon" : "sun"
-              tooltipText: Settings.data.colorSchemes.darkMode ? I18n.tr("tooltips.switch-to-light-mode") : I18n.tr("tooltips.switch-to-dark-mode")
-              baseSize: Style.baseWidgetSize * 0.8
-              onClicked: Settings.data.colorSchemes.darkMode = !Settings.data.colorSchemes.darkMode
             }
 
             NIconButton {
@@ -633,6 +671,7 @@ SmartPanel {
 
   // Component for each screen's wallpaper view
   component WallpaperScreenView: Item {
+    id: wallpaperScreenView
     property var targetScreen
     property alias gridView: wallpaperGridView
 
@@ -653,18 +692,19 @@ SmartPanel {
     property bool isBrowseMode: Settings.data.wallpaper.viewMode === "browse"
     property int _browseScanGeneration: 0
 
-    // Sort favorites to the top (only for non-directory items)
+    // Favorited paths (any light/dark) first, then the rest
     function sortFavoritesToTop(items) {
-      var favorited = [];
-      var nonFavorited = [];
+      var favs = [];
+      var rest = [];
       for (var i = 0; i < items.length; i++) {
-        if (!items[i].isDirectory && WallpaperService.isFavorite(items[i].path)) {
-          favorited.push(items[i]);
+        var it = items[i];
+        if (!it.isDirectory && WallpaperService.isFavorite(it.path)) {
+          favs.push(it);
         } else {
-          nonFavorited.push(items[i]);
+          rest.push(it);
         }
       }
-      return favorited.concat(nonFavorited);
+      return favs.concat(rest);
     }
 
     // Rebuild filteredItems and sync to wallpaperModel (full replacement, no animation).
@@ -791,7 +831,13 @@ SmartPanel {
       target: WallpaperService
       function onWallpaperChanged(screenName, path) {
         if (targetScreen !== null && screenName === targetScreen.name) {
-          currentWallpaper = WallpaperService.getWallpaper(targetScreen.name);
+          currentWallpaper = WallpaperService.getWallpaperPathForSlot(targetScreen.name, WallpaperService.wallpaperSelectionAppearance);
+        }
+      }
+      function onWallpaperSelectionAppearanceChanged() {
+        if (targetScreen !== null) {
+          currentWallpaper = WallpaperService.getWallpaperPathForSlot(targetScreen.name, WallpaperService.wallpaperSelectionAppearance);
+          updateFiltered(false);
         }
       }
       function onWallpaperDirectoryChanged(screenName, directory) {
@@ -825,7 +871,7 @@ SmartPanel {
         return;
       }
 
-      currentWallpaper = WallpaperService.getWallpaper(targetScreen.name);
+      currentWallpaper = WallpaperService.getWallpaperPathForSlot(targetScreen.name, WallpaperService.wallpaperSelectionAppearance);
 
       if (isBrowseMode) {
         // In browse mode, scan current directory for both files and directories
@@ -856,8 +902,8 @@ SmartPanel {
         WallpaperService.setBrowsePath(targetScreen.name, path);
       } else {
         var screen = Settings.data.wallpaper.setWallpaperOnAllMonitors ? undefined : targetScreen.name;
-        WallpaperService.changeWallpaper(path, screen);
-        WallpaperService.applyFavoriteTheme(path, screen);
+        WallpaperService.changeWallpaper(path, screen, WallpaperService.wallpaperSelectionAppearance);
+        WallpaperService.applyFavoriteTheme(path, screen, WallpaperService.wallpaperSelectionAppearance);
       }
     }
 
@@ -1079,7 +1125,10 @@ SmartPanel {
             property string wallpaperPath: model.path ?? ""
             property bool isDirectory: model.isDirectory ?? false
             property bool isSelected: !isDirectory && (wallpaperPath === currentWallpaper)
-            property bool isFavorited: !isDirectory && WallpaperService.isFavorite(wallpaperPath)
+            property bool isFavorited: {
+              WallpaperService.favoritesRevision;
+              return !isDirectory && WallpaperService.isFavorite(wallpaperPath);
+            }
             property string filename: model.name ?? wallpaperPath.split('/').pop()
             property string cachedPath: ""
 
@@ -1184,6 +1233,7 @@ SmartPanel {
                 width: 28
                 height: 28
                 radius: width / 2
+                z: 6
                 color: Color.mSecondary
                 border.color: Color.mOutline
                 border.width: Style.borderS
@@ -1194,6 +1244,11 @@ SmartPanel {
                   pointSize: Style.fontSizeM
                   color: Color.mOnSecondary
                   anchors.centerIn: parent
+                }
+
+                MouseArea {
+                  anchors.fill: parent
+                  onClicked: {}
                 }
               }
 
@@ -1212,7 +1267,7 @@ SmartPanel {
                   return starHoverHandler.hovered ? Color.mSurfaceVariant : Color.mSurface;
                 }
                 opacity: wallpaperItem.isFavorited || starHoverHandler.hovered ? 1.0 : 0.7
-                z: 5
+                z: 11
 
                 Behavior on color {
                   ColorAnimation {
@@ -1242,29 +1297,46 @@ SmartPanel {
 
                 TapHandler {
                   onTapped: {
-                    WallpaperService.toggleFavorite(wallpaperItem.wallpaperPath);
+                    var mon = Settings.data.wallpaper.setWallpaperOnAllMonitors ? undefined : (wallpaperScreenView.targetScreen ? wallpaperScreenView.targetScreen.name : undefined);
+                    WallpaperService.toggleFavorite(wallpaperItem.wallpaperPath, WallpaperService.wallpaperSelectionAppearance, mon);
                   }
                 }
               }
 
-              // Palette color dots (bottom-center, favorites only)
-              Row {
+              // Palette color dots (bottom-center, favorites only) — taps must not fall through to selectItem
+              Item {
                 id: paletteRow
                 anchors.bottom: img.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottomMargin: Style.marginS
-                spacing: Style.marginXS
-                z: 5
+                z: 10
+                implicitWidth: paletteRowRow.implicitWidth
+                implicitHeight: paletteRowRow.implicitHeight
+                width: implicitWidth
+                height: implicitHeight
                 visible: wallpaperItem.isFavorited && paletteRow.colors.length > 0
 
                 property int diameter: 25 * Style.uiScaleRatio
                 property int _favRevision: 0
                 property var favData: {
                   _favRevision;
-                  return WallpaperService.getFavorite(wallpaperItem.wallpaperPath);
+                  WallpaperService.favoritesRevision;
+                  Settings.data.wallpaper.linkLightAndDarkWallpapers;
+                  return WallpaperService.getFavoriteForDisplay(wallpaperItem.wallpaperPath);
                 }
                 property var colors: favData && favData.paletteColors ? favData.paletteColors : []
-                property bool isDark: favData ? favData.darkMode : false
+                property bool isDark: {
+                  if (!favData) {
+                    return false;
+                  }
+                  if (favData.appearance === "dark") {
+                    return true;
+                  }
+                  if (favData.appearance === "light") {
+                    return false;
+                  }
+                  return favData.darkMode === true;
+                }
 
                 Connections {
                   target: WallpaperService
@@ -1274,34 +1346,44 @@ SmartPanel {
                   }
                 }
 
-                // Dark/light mode indicator
-                Rectangle {
-                  width: paletteRow.diameter
-                  height: paletteRow.diameter
-                  radius: width * 0.5
-                  color: Color.mSurface
-                  border.color: Color.mShadow
-                  border.width: Style.borderS
+                Row {
+                  id: paletteRowRow
+                  spacing: Style.marginXS
 
-                  NIcon {
-                    icon: paletteRow.isDark ? "moon" : "sun"
-                    pointSize: parent.width * 0.45
-                    color: Color.mOnSurface
-                    anchors.centerIn: parent
-                  }
-                }
-
-                Repeater {
-                  model: paletteRow.colors
-
+                  // Sun/moon only when light/dark share one wallpaper (which appearance the favorite targets)
                   Rectangle {
                     width: paletteRow.diameter
                     height: paletteRow.diameter
                     radius: width * 0.5
-                    color: modelData
+                    visible: Settings.data.wallpaper.linkLightAndDarkWallpapers
+                    color: Color.mSurface
                     border.color: Color.mShadow
                     border.width: Style.borderS
+
+                    NIcon {
+                      icon: paletteRow.isDark ? "moon" : "sun"
+                      pointSize: parent.width * 0.45
+                      color: Color.mOnSurface
+                      anchors.centerIn: parent
+                    }
                   }
+
+                  Repeater {
+                    model: paletteRow.colors
+
+                    Rectangle {
+                      width: paletteRow.diameter
+                      height: paletteRow.diameter
+                      radius: width * 0.5
+                      color: modelData
+                      border.color: Color.mShadow
+                      border.width: Style.borderS
+                    }
+                  }
+                }
+
+                TapHandler {
+                  onTapped: {}
                 }
               }
 
@@ -1842,11 +1924,13 @@ SmartPanel {
       if (typeof WallhavenService !== "undefined") {
         WallhavenService.downloadWallpaper(wallpaper, function (success, localPath) {
           if (success) {
+            var whScreen = Settings.data.wallpaper.setWallpaperOnAllMonitors ? undefined : Quickshell.screens[currentScreenIndex].name;
             if (!Settings.data.wallpaper.setWallpaperOnAllMonitors && currentScreenIndex < Quickshell.screens.length) {
-              WallpaperService.changeWallpaper(localPath, Quickshell.screens[currentScreenIndex].name);
+              WallpaperService.changeWallpaper(localPath, Quickshell.screens[currentScreenIndex].name, WallpaperService.wallpaperSelectionAppearance);
             } else {
-              WallpaperService.changeWallpaper(localPath, undefined);
+              WallpaperService.changeWallpaper(localPath, undefined, WallpaperService.wallpaperSelectionAppearance);
             }
+            WallpaperService.applyFavoriteTheme(localPath, whScreen, WallpaperService.wallpaperSelectionAppearance);
           }
         });
       }

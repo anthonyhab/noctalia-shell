@@ -34,6 +34,14 @@ Loader {
         }
       }
 
+      // Update dock apps when window list change
+      Connections {
+        target: CompositorService
+        function onWindowListChanged() {
+          updateDockApps();
+        }
+      }
+
       // Update dock apps when toplevels change
       Connections {
         target: ToplevelManager ? ToplevelManager.toplevels : null

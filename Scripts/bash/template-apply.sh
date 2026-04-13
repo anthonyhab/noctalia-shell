@@ -4,7 +4,7 @@
 if [ "$#" -lt 1 ]; then
     # Print usage information to standard error.
     echo "Error: No application specified." >&2
-    echo "Usage: $0 {kitty|ghostty|foot|alacritty|wezterm|fuzzel|walker|pywalfox|cava|yazi|labwc|niri|hyprland|sway|scroll|mango|btop|zathura} [dark|light]" >&2
+    echo "Usage: $0 {kitty|ghostty|foot|alacritty|wezterm|starship|fuzzel|walker|pywalfox|cava|yazi|labwc|niri|hyprland|sway|scroll|mango|btop|zathura} [dark|light]" >&2
     exit 1
 fi
 
@@ -20,6 +20,8 @@ kitty)
     else
         kitty +runpy "from kitty.utils import *; reload_conf_in_all_kitties()"
     fi
+    # Trigger kitty's live config reload after the template has been regenerated.
+    pkill -USR1 kitty >/dev/null 2>&1 || true
     ;;
 
 ghostty)
@@ -339,7 +341,7 @@ hyprland)
         if grep -qE 'source\s*=\s*.*noctalia.*\.conf' "$CONFIG_FILE"; then
             echo "Theme already included, skipping modification."
         else
-            # Only convert symlink when we actually need to write
+            # Only convert symlink when we actually need to write (NixOS read-only symlinks)
             if [ -L "$CONFIG_FILE" ] && [ ! -w "$CONFIG_FILE" ]; then
                 echo "Detected read-only symlink, converting to local file..."
                 cp --remove-destination "$(readlink -f "$CONFIG_FILE")" "$CONFIG_FILE"
@@ -372,7 +374,7 @@ sway)
         if grep -qE 'include\s+.*noctalia' "$CONFIG_FILE"; then
             echo "Theme already included, skipping modification."
         else
-            # Only convert symlink when we actually need to write
+            # Only convert symlink when we actually need to write (NixOS read-only symlinks)
             if [ -L "$CONFIG_FILE" ] && [ ! -w "$CONFIG_FILE" ]; then
                 echo "Detected read-only symlink, converting to local file..."
                 cp --remove-destination "$(readlink -f "$CONFIG_FILE")" "$CONFIG_FILE"
@@ -453,9 +455,24 @@ mango)
                 grep -E "^($COLOR_VARS)\s*=" "$conf_file" >>"$BACKUP_FILE"
 
                 # Remove color definitions from original file
-                sed -i -E "/^($COLOR_VARS)\s*=/d" "$conf_file"
+                if [ -L "$conf_file" ] && [ ! -w "$conf_file" ]; then
+                    # Read-only symlink (e.g. NixOS): convert to local file
+                    cp --remove-destination "$(readlink -f "$conf_file")" "$conf_file"
+                    chmod +w "$conf_file"
+                    sed -i -E "/^($COLOR_VARS)\s*=/d" "$conf_file"
+                else
+                    # Edit the real file, preserving any writable symlink
+                    sed -i -E "/^($COLOR_VARS)\s*=/d" "$(readlink -f "$conf_file")"
+                fi
             fi
         done
+
+        # Only convert symlink when we actually need to write
+        if [ -L "$MAIN_CONFIG" ] && [ ! -w "$MAIN_CONFIG" ]; then
+            echo "Detected read-only symlink, converting to local file..."
+            cp --remove-destination "$(readlink -f "$MAIN_CONFIG")" "$MAIN_CONFIG"
+            chmod +w "$MAIN_CONFIG"
+        fi
 
         # Add source line to main config
         if [ -f "$MAIN_CONFIG" ]; then
@@ -515,6 +532,59 @@ zathura)
             org.pwmt.zathura.ExecuteCommand \
             string:"source"
     done
+    ;;
+
+starship)
+    # Check if the nested starship config exists first
+    if [ -f "$HOME/.config/starship/starship.toml" ]; then
+        CONFIG_FILE="$HOME/.config/starship/starship.toml"
+    else
+    # Fallback to the default path
+        CONFIG_FILE="$HOME/.config/starship.toml"
+    fi
+
+    # Check if the generated palette file exists
+    if [ ! -f "$PALETTE_FILE" ]; then
+        echo "Error: Starship palette file not found at $PALETTE_FILE" >&2
+        exit 1
+    fi
+
+    MARKER_BEGIN="# >>> NOCTALIA STARSHIP PALETTE >>>"
+    MARKER_END="# <<< NOCTALIA STARSHIP PALETTE <<<"
+
+    # Create config file if it doesn't exist
+    if [ ! -f "$CONFIG_FILE" ]; then
+        mkdir -p "$(dirname "$CONFIG_FILE")"
+        echo 'palette = "noctalia"' > "$CONFIG_FILE"
+        echo "" >> "$CONFIG_FILE"
+        echo "$MARKER_BEGIN" >> "$CONFIG_FILE"
+        cat "$PALETTE_FILE" >> "$CONFIG_FILE"
+        echo "$MARKER_END" >> "$CONFIG_FILE"
+        exit 0
+    fi
+
+    # 1. Set palette = "noctalia" at top level
+    if grep -qE '^palette\s*=' "$CONFIG_FILE"; then
+        sed -i -E 's/^palette\s*=.*/palette = "noctalia"/' "$CONFIG_FILE"
+    else
+        # Insert after schema line if present, otherwise at line 1
+        if grep -qE '^\"\$schema\"' "$CONFIG_FILE"; then
+            sed -i '/^\"\$schema\"/a palette = "noctalia"' "$CONFIG_FILE"
+        else
+            sed -i '1i palette = "noctalia"' "$CONFIG_FILE"
+        fi
+    fi
+
+    # 2. Remove existing noctalia palette block (between markers)
+    if grep -qF "$MARKER_BEGIN" "$CONFIG_FILE"; then
+        sed -i "/$(echo "$MARKER_BEGIN" | sed 's/[[\.*^$()+?{|]/\\&/g')/,/$(echo "$MARKER_END" | sed 's/[[\.*^$()+?{|]/\\&/g')/d" "$CONFIG_FILE"
+    fi
+
+    # 3. Append the new palette block
+    echo "" >> "$CONFIG_FILE"
+    echo "$MARKER_BEGIN" >> "$CONFIG_FILE"
+    cat "$PALETTE_FILE" >> "$CONFIG_FILE"
+    echo "$MARKER_END" >> "$CONFIG_FILE"
     ;;
 
 *)

@@ -172,6 +172,7 @@ RowLayout {
   ComboBox {
     id: combo
 
+    opacity: enabled ? 1.0 : 0.6
     Layout.margins: Style.borderS
     Layout.minimumWidth: Math.round(root.minimumWidth * Style.uiScaleRatio)
     Layout.preferredHeight: Math.round(root.preferredHeight * Style.uiScaleRatio)
@@ -335,11 +336,6 @@ RowLayout {
                   verticalAlignment: Text.AlignVCenter
                   elide: Text.ElideRight
                   Layout.fillWidth: true
-                  Behavior on color {
-                    ColorAnimation {
-                      duration: Style.animationFast
-                    }
-                  }
                 }
 
                 RowLayout {
@@ -395,11 +391,6 @@ RowLayout {
                 anchors.fill: parent
                 color: highlighted ? Color.mHover : "transparent"
                 radius: Style.iRadiusS
-                Behavior on color {
-                  ColorAnimation {
-                    duration: Style.animationFast
-                  }
-                }
               }
             }
           }

@@ -16,14 +16,16 @@ Singleton {
   property string schemesDirectory: Quickshell.shellDir + "/Assets/ColorScheme"
   property string downloadedSchemesDirectory: Settings.configDir + "colorschemes"
   property string colorsJsonFilePath: Settings.configDir + "colors.json"
+  // Last successfully parsed predefined scheme JSON (full object). Used to refresh app templates
+  // on wallpaper changes without re-running applyScheme (avoids rewriting colors.json when unchanged).
+  property var lastPredefinedSchemeData: null
   readonly property string gtkRefreshScript: Quickshell.shellDir + "/Scripts/python/src/theming/gtk-refresh.py"
 
-  // force: when true, always push (e.g. user enabled "Sync system theme"). When false/omitted,
-  // skip if the GTK template is enabled so we do not race its post-hook on every darkMode flip.
-  function pushSystemColorScheme(force) {
+  // prefer-light/prefer-dark only; GTK template post_hook still runs full gtk-refresh.
+  function pushSystemColorScheme() {
     if (!Settings.data.colorSchemes.syncGsettings)
       return;
-    if (!force && TemplateProcessor.isTemplateEnabled("gtk"))
+    if (TemplateProcessor.isTemplateEnabled("gtk"))
       return;
     const mode = Settings.data.colorSchemes.darkMode ? "dark" : "light";
     Quickshell.execDetached(["python3", gtkRefreshScript, "--appearance-only", mode]);
@@ -204,6 +206,7 @@ Singleton {
           }
         }
         writeColorsToDisk(variant);
+        lastPredefinedSchemeData = data;
         Logger.i("ColorScheme", "Applying color scheme:", getBasename(path));
 
         // Generate templates for predefined color schemes
