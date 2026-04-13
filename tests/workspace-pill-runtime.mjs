@@ -73,6 +73,9 @@ Singleton {
   function toOdd(n) {
     return Math.floor(n / 2) * 2 + 1;
   }
+  function nestedRadius(radius, inset) {
+    return Math.max(0, (radius || 0) - (inset || 0));
+  }
 }
 `);
 
@@ -165,6 +168,18 @@ Singleton {
   signal windowListChanged()
   function getWindowsForWorkspace(workspaceId) {
     return [];
+  }
+}
+`);
+
+writeFile("Services/UI/TooltipService.qml", `pragma Singleton
+import QtQuick
+import Quickshell
+
+Singleton {
+  function show() {
+  }
+  function hide() {
   }
 }
 `);

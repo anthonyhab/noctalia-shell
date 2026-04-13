@@ -31,7 +31,7 @@ ColumnLayout {
 
     // Smooth color transitions
     Behavior on color {
-      enabled: root._userInteracted
+      enabled: root._userInteracted && !Color.isTransitioning
       ColorAnimation {
         duration: Style.animationNormal
         easing.type: Easing.OutCubic
@@ -39,7 +39,7 @@ ColumnLayout {
     }
 
     Behavior on border.color {
-      enabled: root._userInteracted
+      enabled: root._userInteracted && !Color.isTransitioning
       ColorAnimation {
         duration: Style.animationNormal
         easing.type: Easing.OutCubic
@@ -97,7 +97,7 @@ ColumnLayout {
         }
 
         Behavior on color {
-          enabled: root._userInteracted
+          enabled: root._userInteracted && !Color.isTransitioning
           ColorAnimation {
             duration: Style.animationNormal
           }
@@ -118,7 +118,7 @@ ColumnLayout {
           wrapMode: Text.WordWrap
 
           Behavior on color {
-            enabled: root._userInteracted
+            enabled: root._userInteracted && !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationNormal
             }
@@ -136,7 +136,7 @@ ColumnLayout {
           opacity: 0.87
 
           Behavior on color {
-            enabled: root._userInteracted
+            enabled: root._userInteracted && !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationNormal
             }

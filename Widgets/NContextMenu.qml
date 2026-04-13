@@ -89,6 +89,7 @@ Popup {
         radius: Style.iRadiusS
 
         Behavior on color {
+          enabled: !Color.isTransitioning
           ColorAnimation {
             duration: Style.animationFast
           }
@@ -107,6 +108,7 @@ Popup {
           Layout.leftMargin: root.itemPadding
 
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }
@@ -122,6 +124,7 @@ Popup {
           Layout.leftMargin: modelData.icon === undefined ? root.itemPadding : 0
 
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }

@@ -201,6 +201,7 @@ RowLayout {
       radius: Style.iRadiusM
 
       Behavior on border.color {
+        enabled: !Color.isTransitioning
         ColorAnimation {
           duration: Style.animationFast
         }
@@ -275,6 +276,7 @@ RowLayout {
           color: isHighlighted ? Color.mHover : "transparent"
 
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }
@@ -295,6 +297,7 @@ RowLayout {
             }
 
             Behavior on color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }

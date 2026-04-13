@@ -288,6 +288,7 @@ Rectangle {
                 radius: Style.iRadiusS
 
                 Behavior on color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }
@@ -301,6 +302,7 @@ Rectangle {
                   font.weight: Style.fontWeightBold
 
                   Behavior on color {
+                    enabled: !Color.isTransitioning
                     ColorAnimation {
                       duration: Style.animationFast
                     }
@@ -318,6 +320,7 @@ Rectangle {
                 wrapMode: Text.WordWrap
 
                 Behavior on color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }
@@ -335,12 +338,14 @@ Rectangle {
                 border.width: Style.borderS
 
                 Behavior on color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }
                 }
 
                 Behavior on border.color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }
@@ -353,6 +358,7 @@ Rectangle {
                   pointSize: Style.fontSizeS
 
                   Behavior on color {
+                    enabled: !Color.isTransitioning
                     ColorAnimation {
                       duration: Style.animationFast
                     }

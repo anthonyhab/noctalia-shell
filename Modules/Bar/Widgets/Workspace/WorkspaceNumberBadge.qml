@@ -3,85 +3,96 @@ import qs.Commons
 import qs.Widgets
 
 Item {
-  id: root
+    id: root
 
-  property var workspaceModel
-  property string labelMode: "index"
-  property int characterCount: 3
-  property bool isFocused: false
-  property bool isScratchpad: false
-  property real capsuleHeight: Style.capsuleHeight
-  property real barFontSize: Style.barFontSize
-  property bool itemHovered: false
-  property int inset: 0
+    property var workspaceModel
+    property string labelMode: "index"
+    property int characterCount: 3
+    property bool isFocused: false
+    property bool isScratchpad: false
+    property real capsuleHeight: Style.capsuleHeight
+    property real barFontSize: Style.barFontSize
+    property bool itemHovered: false
+    property int inset: 0
+    readonly property bool isUrgent: workspaceModel ? workspaceModel.isUrgent : false
+    readonly property string labelText: {
+        if (!workspaceModel)
+            return "";
 
-  signal clicked()
+        if (isScratchpad && workspaceModel.scratchpadLabel)
+            return workspaceModel.scratchpadLabel.toString();
 
-  readonly property bool isUrgent: workspaceModel ? workspaceModel.isUrgent : false
-  readonly property string labelText: {
-    if (!workspaceModel)
-      return "";
-    if (isScratchpad && workspaceModel.scratchpadLabel)
-      return workspaceModel.scratchpadLabel.toString();
+        const idx = workspaceModel.idx !== undefined ? workspaceModel.idx.toString() : "";
+        const name = workspaceModel.name ? workspaceModel.name.toString().substring(0, characterCount) : "";
+        if (labelMode === "name")
+            return name;
 
-    const idx = workspaceModel.idx !== undefined ? workspaceModel.idx.toString() : "";
-    const name = workspaceModel.name ? workspaceModel.name.toString().substring(0, characterCount) : "";
+        if (labelMode === "index+name" && name.length > 0)
+            return idx.length > 0 ? idx + " " + name : name;
 
-    if (labelMode === "name")
-      return name;
-    if (labelMode === "index+name" && name.length > 0)
-      return idx.length > 0 ? idx + " " + name : name;
-    return idx;
-  }
-
-  readonly property int horizontalPadding: Math.max(Style.marginXS, Math.round(capsuleHeight * 0.24))
-
-  implicitWidth: Math.max(capsuleHeight - (inset * 2), label.contentWidth + horizontalPadding * 2)
-  implicitHeight: capsuleHeight
-
-  Item {
-    id: labelStage
-    anchors.centerIn: parent
-    width: root.width
-    height: root.height
-    scale: badgeMouseArea.pressed ? 0.94 : (root.itemHovered ? 1.05 : 1.0)
-    transformOrigin: Item.Center
-
-    Behavior on scale {
-      NumberAnimation {
-        duration: Style.animationFast
-        easing.type: Easing.OutCubic
-      }
+        return idx;
     }
+    readonly property int horizontalPadding: Math.max(Style.marginXS, Math.round(capsuleHeight * 0.24))
 
-    NText {
-      id: label
-      anchors.centerIn: parent
-      text: root.labelText
-      family: Settings.data.ui.fontFixed
-      pointSize: root.barFontSize
-      applyUiScale: false
-      font.weight: root.isFocused ? Style.fontWeightBold : Style.fontWeightMedium
-      color: root.isFocused ? Color.mOnPrimary : (root.itemHovered ? Color.mOnHover : Qt.alpha(Color.mOnSurface, 0.96))
-      Behavior on color {
-        ColorAnimation {
-          duration: Style.animationNormal
-          easing.type: Easing.OutCubic
+    signal clicked()
+
+    implicitWidth: Math.max(capsuleHeight - (inset * 2), label.contentWidth + horizontalPadding * 2)
+    implicitHeight: capsuleHeight
+
+    Item {
+        id: labelStage
+
+        anchors.centerIn: parent
+        width: root.width
+        height: root.height
+        scale: badgeMouseArea.pressed ? 0.94 : (root.itemHovered ? 1.05 : 1)
+        transformOrigin: Item.Center
+
+        NText {
+            id: label
+
+            anchors.centerIn: parent
+            text: root.labelText
+            family: Settings.data.ui.fontFixed
+            pointSize: root.barFontSize
+            applyUiScale: false
+            font.weight: root.isFocused ? Style.fontWeightBold : Style.fontWeightMedium
+            color: root.isFocused ? Color.mOnPrimary : (root.itemHovered ? Color.mOnHover : Qt.alpha(Color.mOnSurface, 0.96))
+            features: ({
+                "tnum": 1
+            })
+
+            Behavior on color {
+                enabled: !Color.isTransitioning
+
+                ColorAnimation {
+                    duration: Style.animationNormal
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
         }
-      }
-      features: ({
-                   "tnum": 1
-                 })
-    }
-  }
 
-  MouseArea {
-    id: badgeMouseArea
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
-    onEntered: root.itemHovered = true
-    onExited: root.itemHovered = false
-    onClicked: root.clicked()
-  }
+        Behavior on scale {
+            NumberAnimation {
+                duration: Style.animationFast
+                easing.type: Easing.OutCubic
+            }
+
+        }
+
+    }
+
+    MouseArea {
+        id: badgeMouseArea
+
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onEntered: root.itemHovered = true
+        onExited: root.itemHovered = false
+        onClicked: root.clicked()
+    }
+
 }

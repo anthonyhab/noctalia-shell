@@ -104,6 +104,7 @@ Item {
             color: dragHandleMouseArea.containsMouse ? Color.mSurfaceVariant : "transparent"
 
             Behavior on color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }
@@ -208,12 +209,14 @@ Item {
             opacity: delegateItem.required ? 0.7 : 1.0
 
             Behavior on color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }
             }
 
             Behavior on border.color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }

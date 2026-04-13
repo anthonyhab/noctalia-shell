@@ -224,6 +224,7 @@ Slider {
         color: root.pressed ? Color.mHover : Color.mSurface
 
         Behavior on color {
+          enabled: !Color.isTransitioning
           ColorAnimation {
             duration: Style.animationFast
           }

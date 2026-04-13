@@ -439,6 +439,7 @@ Popup {
               border.color: isSelected ? Color.mSecondary : Color.mSurface
               border.width: Style.borderL
               Behavior on color {
+                enabled: !Color.isTransitioning
                 ColorAnimation {
                   duration: Style.animationFast
                 }
@@ -452,11 +453,13 @@ Popup {
               border.color: (mouseArea.containsMouse && !isSelected) ? Color.mHover : "transparent"
               border.width: Style.borderS
               Behavior on color {
+                enabled: !Color.isTransitioning
                 ColorAnimation {
                   duration: Style.animationFast
                 }
               }
               Behavior on border.color {
+                enabled: !Color.isTransitioning
                 ColorAnimation {
                   duration: Style.animationFast
                 }
@@ -631,6 +634,7 @@ Popup {
             }
             radius: Style.iRadiusS
             Behavior on color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }

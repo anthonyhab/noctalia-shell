@@ -135,11 +135,13 @@ Item {
             border.width: Style.borderS
 
             Behavior on color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }
             }
             Behavior on border.color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }

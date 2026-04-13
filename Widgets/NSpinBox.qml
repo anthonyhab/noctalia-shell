@@ -100,6 +100,7 @@ RowLayout {
     border.width: Style.borderS
 
     Behavior on border.color {
+      enabled: !Color.isTransitioning
       ColorAnimation {
         duration: Style.animationFast
       }
@@ -155,6 +156,7 @@ RowLayout {
           anchors.left: parent.left
           color: decreaseArea.containsMouse ? Color.mHover : "transparent"
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }
@@ -178,6 +180,7 @@ RowLayout {
 
           color: decreaseArea.containsMouse ? Color.mHover : "transparent"
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }
@@ -254,6 +257,7 @@ RowLayout {
           anchors.right: parent.right
           color: increaseArea.containsMouse ? Color.mHover : "transparent"
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }
@@ -277,6 +281,7 @@ RowLayout {
 
           color: increaseArea.containsMouse ? Color.mHover : "transparent"
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }

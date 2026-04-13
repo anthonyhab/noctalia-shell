@@ -265,6 +265,7 @@ PopupWindow {
             opacity: modelData.enabled !== false ? 1.0 : 0.5
 
             Behavior on color {
+              enabled: !Color.isTransitioning
               ColorAnimation {
                 duration: Style.animationFast
               }
@@ -285,6 +286,7 @@ PopupWindow {
                 verticalAlignment: Text.AlignVCenter
 
                 Behavior on color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }
@@ -299,6 +301,7 @@ PopupWindow {
                 Layout.fillWidth: true
 
                 Behavior on color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }

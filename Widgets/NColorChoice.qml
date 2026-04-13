@@ -77,6 +77,7 @@ RowLayout {
         }
 
         Behavior on border.color {
+          enabled: !Color.isTransitioning
           ColorAnimation {
             duration: Style.animationFast
           }

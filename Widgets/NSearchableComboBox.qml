@@ -190,6 +190,7 @@ RowLayout {
       radius: Style.iRadiusM
 
       Behavior on border.color {
+        enabled: !Color.isTransitioning
         ColorAnimation {
           duration: Style.animationFast
         }
@@ -285,6 +286,7 @@ RowLayout {
                   elide: Text.ElideRight
                   Layout.fillWidth: true
                   Behavior on color {
+                    enabled: !Color.isTransitioning
                     ColorAnimation {
                       duration: Style.animationFast
                     }
@@ -345,6 +347,7 @@ RowLayout {
                 color: highlighted ? Color.mHover : "transparent"
                 radius: Style.iRadiusS
                 Behavior on color {
+                  enabled: !Color.isTransitioning
                   ColorAnimation {
                     duration: Style.animationFast
                   }

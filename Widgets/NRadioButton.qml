@@ -29,6 +29,7 @@ RadioButton {
       color: Qt.alpha(Color.mPrimary, root.checked ? 1 : 0)
 
       Behavior on color {
+        enabled: !Color.isTransitioning
         ColorAnimation {
           duration: Style.animationFast
         }
@@ -36,6 +37,7 @@ RadioButton {
     }
 
     Behavior on border.color {
+      enabled: !Color.isTransitioning
       ColorAnimation {
         duration: Style.animationFast
       }

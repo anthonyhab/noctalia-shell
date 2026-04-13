@@ -12,6 +12,7 @@ Singleton {
 
   property var schemes: []
   property bool scanning: false
+  property bool suppressDarkModeNotification: false
   property string schemesDirectory: Quickshell.shellDir + "/Assets/ColorScheme"
   property string downloadedSchemesDirectory: Settings.configDir + "colorschemes"
   property string colorsJsonFilePath: Settings.configDir + "colors.json"
@@ -24,11 +25,13 @@ Singleton {
         // Re-apply current scheme to pick the right variant
         applyScheme(Settings.data.colorSchemes.predefinedScheme);
       }
-      // Toast: dark/light mode switched
-      const enabled = !!Settings.data.colorSchemes.darkMode;
-      const label = enabled ? I18n.tr("tooltips.switch-to-dark-mode") : I18n.tr("tooltips.switch-to-light-mode");
-      const description = I18n.tr("common.enabled");
-      ToastService.showNotice(label, description, "dark-mode");
+      if (!root.suppressDarkModeNotification) {
+        // Toast: dark/light mode switched
+        const enabled = !!Settings.data.colorSchemes.darkMode;
+        const label = enabled ? I18n.tr("tooltips.switch-to-dark-mode") : I18n.tr("tooltips.switch-to-light-mode");
+        const description = I18n.tr("common.enabled");
+        ToastService.showNotice(label, description, "dark-mode");
+      }
     }
   }
 

@@ -49,6 +49,7 @@ Item {
       opacity: root.showAccentChip ? 1.0 : 0.0
 
       Behavior on color {
+        enabled: !Color.isTransitioning
         ColorAnimation {
           duration: Style.animationFast
           easing.type: Easing.OutCubic
@@ -56,6 +57,7 @@ Item {
       }
 
       Behavior on border.color {
+        enabled: !Color.isTransitioning
         ColorAnimation {
           duration: Style.animationFast
           easing.type: Easing.OutCubic

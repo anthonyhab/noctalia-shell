@@ -323,6 +323,7 @@ Item {
         }
 
         Behavior on color {
+          enabled: !Color.isTransitioning
           ColorAnimation {
             duration: Style.animationFast
           }

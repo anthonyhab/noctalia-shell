@@ -56,12 +56,14 @@ RowLayout {
     border.width: Style.borderS
 
     Behavior on color {
+      enabled: !Color.isTransitioning
       ColorAnimation {
         duration: Style.animationFast
       }
     }
 
     Behavior on border.color {
+      enabled: !Color.isTransitioning
       ColorAnimation {
         duration: Style.animationFast
       }
@@ -99,6 +101,7 @@ RowLayout {
           color: root.checked ? Color.mOnPrimary : Color.mPrimary
 
           Behavior on color {
+            enabled: !Color.isTransitioning
             ColorAnimation {
               duration: Style.animationFast
             }

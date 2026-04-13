@@ -417,8 +417,9 @@ Item {
         color: isActive ? activeColor : Qt.alpha(activeColor, 0.2)
 
         Behavior on color {
+          enabled: !Color.isTransitioning
           ColorAnimation {
-            duration: 200
+            duration: Style.animationFast
           }
         }
       }
